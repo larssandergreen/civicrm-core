@@ -336,14 +336,6 @@ class CRM_Event_Form_Registration_AdditionalParticipant extends CRM_Event_Form_R
 
     //CRM-4320
     if ($allowToProceed) {
-      $buttons = array_merge($buttons, [
-        [
-          'type' => 'upload',
-          'name' => ts('Continue'),
-          'spacing' => '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
-          'isDefault' => TRUE,
-        ],
-      ]);
       if ($includeSkipButton) {
         $buttons = array_merge($buttons, [
           [
@@ -354,6 +346,14 @@ class CRM_Event_Form_Registration_AdditionalParticipant extends CRM_Event_Form_R
           ],
         ]);
       }
+      $buttons = array_merge($buttons, [
+        [
+          'type' => 'upload',
+          'name' => ts('Continue'),
+          'spacing' => '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
+          'isDefault' => TRUE,
+        ],
+      ]);
     }
     $this->addButtons($buttons);
     $this->addFormRule(['CRM_Event_Form_Registration_AdditionalParticipant', 'formRule'], $this);

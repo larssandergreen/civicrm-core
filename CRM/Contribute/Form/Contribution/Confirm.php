@@ -596,14 +596,14 @@ class CRM_Contribute_Form_Contribution_Confirm extends CRM_Contribute_Form_Contr
 
     $this->addButtons([
       [
+        'type' => 'back',
+        'name' => ts('Go Back'),
+      ],
+      [
         'type' => 'next',
         'name' => $contribButton,
         'spacing' => '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
         'isDefault' => TRUE,
-      ],
-      [
-        'type' => 'back',
-        'name' => ts('Go Back'),
       ],
     ]);
 
