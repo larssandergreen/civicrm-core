@@ -865,6 +865,12 @@ SELECT event_queue_id, time_stamp FROM {$temporaryTableName}";
     $params['groups']['exclude'] = [];
     $params['mailings']['include'] = [];
     $params['mailings']['exclude'] = [];
+
+    $paramsB = $params;
+    $paramsB['groups']['include'] = [];
+    $paramsB['mailing_type'] = 'experiment';
+
+    $paramsABTest['created_id'] = $this->_contactID;
     // END SAMPLE DATA
 
     $create = $this->callAPISuccess('Mailing', 'create', $params);
@@ -890,6 +896,19 @@ SELECT event_queue_id, time_stamp FROM {$temporaryTableName}";
     $this->assertEquals($cloneGroups['values'][0]['group_type'], 'Include');
     $this->assertEquals($cloneGroups['values'][0]['entity_table'], 'civicrm_group');
     $this->assertEquals($cloneGroups['values'][0]['entity_id'], $groupIDs['inc']);
+
+    // Create a B mailing, attach it to the mailing above in an A/B test and then clone mailing B
+    $createB = $this->callAPISuccess('Mailing', 'create', $paramsB);
+    $createBId = $createB['id'];
+    $paramsABTest['mailing_id_a'] = $createId;
+    $paramsABTest['mailing_id_b'] = $createBId;
+    $createABTest = $this->callAPISuccess('MailingAB', 'create', $paramsABTest);
+    $cloneB = $this->callAPISuccess('Mailing', 'clone', ['id' => $createBId]);
+
+    $cloneBGroups = $this->callAPISuccess('MailingGroup', 'get', ['mailing_id' => $cloneB['id'], 'sequential' => 1]);
+    $this->assertEquals($cloneBGroups['values'][0]['group_type'], 'Include');
+    $this->assertEquals($cloneBGroups['values'][0]['entity_table'], 'civicrm_group');
+    $this->assertEquals($cloneBGroups['values'][0]['entity_id'], $groupIDs['inc']);
   }
 
   //@ todo tests below here are all failure tests which are not hugely useful - need success tests
