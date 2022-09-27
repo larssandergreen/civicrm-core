@@ -196,6 +196,16 @@ function civicrm_api3_mailing_clone($params) {
 
   $dao = new CRM_Mailing_DAO_MailingGroup();
   $dao->mailing_id = $params['id'];
+  if ($get['mailing_type'] === 'winner' || 'experiment') {
+    $abtest = CRM_Mailing_BAO_MailingAB::getABTest($params['id']);
+    $daoabtest = new CRM_Mailing_DAO_MailingAB();
+    if (!empty($abtest->id)) {
+      $daoabtest->id = $abtest->id;
+      if ($daoabtest->find(TRUE)) {
+        $dao->mailing_id = $daoabtest->mailing_id_a;
+      }
+    }
+  }
   $dao->find();
   while ($dao->fetch()) {
     // CRM-11431; account for multi-lingual
