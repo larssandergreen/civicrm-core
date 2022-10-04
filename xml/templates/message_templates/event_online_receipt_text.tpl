@@ -88,12 +88,10 @@
 {ts}Email{/ts}: {$eventEmail.email}{/if}{/foreach}
 {/if}
 
-{if !empty($event.is_public)}
 {capture assign=icalFeed}{crmURL p='civicrm/event/ical' q="reset=1&id=`$event.id`" h=0 a=1 fe=1}{/capture}
 {ts}Download iCalendar entry for this event.{/ts} {$icalFeed}
 {capture assign=gCalendar}{crmURL p='civicrm/event/ical' q="gCalendar=1&reset=1&id=`$event.id`" h=0 a=1 fe=1}{/capture}
 {ts}Add event to Google Calendar{/ts} {$gCalendar}
-{/if}
 
 {if !empty($payer.name)}
 You were registered by: {$payer.name}
