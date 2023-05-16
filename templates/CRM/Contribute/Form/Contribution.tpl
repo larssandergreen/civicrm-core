@@ -65,10 +65,11 @@
           <td>{$form.contact_id.html}</td>
         </tr>
         <tr class="crm-contribution-form-block-contribution_type_id crm-contribution-form-block-financial_type_id">
-          <td class="label">{$form.financial_type_id.label}</td><td{$valueStyle}>{$form.financial_type_id.html}&nbsp;
+          <td class="label">{$form.financial_type_id.label} {help id="id-financial_type"}</td>
+          <td{$valueStyle}>{$form.financial_type_id.html}
             {if $is_test}
-              {ts}(test){/ts}
-            {/if} {help id="id-financial_type"}
+              &nbsp;{ts}(test){/ts}
+            {/if}
           </td>
         </tr>
         {if $action eq 2 and $lineItem and !$defaultContribution}
@@ -78,12 +79,14 @@
           </tr>
         {else}
           <tr  class="crm-contribution-form-block-total_amount">
-            <td class="label">{$form.total_amount.label}</td>
-            <td {$valueStyle}>
-              <span id='totalAmount'>{$form.currency.html|crmAddClass:eight}&nbsp;{$form.total_amount.html|crmAddClass:eight}</span>
+            <td class="label">
+              {$form.total_amount.label}
               {if !empty($freezeFinancialType)}
                 {help id="id-total_amount"}
               {/if}
+            </td>
+            <td {$valueStyle}>
+              <span id='totalAmount'>{$form.currency.html|crmAddClass:eight}&nbsp;{$form.total_amount.html|crmAddClass:eight}</span>
               {if !$payNow}
                 {if $hasPriceSets}
                   <span id='totalAmountORPriceSet'> {ts}OR{/ts}</span>
@@ -136,8 +139,8 @@
         {/if}
 
         <tr class="crm-contribution-form-block-source">
-          <td class="label">{$form.source.label}</td>
-          <td {$valueStyle}>{$form.source.html|crmAddClass:huge} {help id="id-contrib_source"}
+          <td class="label">{$form.source.label} {help id="id-contrib_source"}</td>
+          <td {$valueStyle}>{$form.source.html|crmAddClass:huge}
           </td>
         </tr>
 
@@ -219,8 +222,8 @@
         {/if}
         {if empty($is_template)}
         <tr id="fromEmail" class="crm-contribution-form-block-receipt_date" style="display:none;">
-          <td class="label">{$form.from_email_address.label}</td>
-          <td>{$form.from_email_address.html} {help id="id-from_email" file="CRM/Contact/Form/Task/Help/Email/id-from_email.hlp"}</td>
+          <td class="label">{$form.from_email_address.label} {help id="id-from_email" file="CRM/Contact/Form/Task/Help/Email/id-from_email.hlp"}</td>
+          <td>{$form.from_email_address.html}</td>
         </tr>
         {/if}
         {if empty($is_template)}
@@ -246,12 +249,12 @@
         {else}
           <table class="form-layout-compressed" >
             <tr class="crm-contribution-form-block-payment_instrument_id">
-              <td class="label">{$form.payment_instrument_id.label}</td>
-              <td {$valueStyle}>{$form.payment_instrument_id.html} {help id="payment_instrument_id"}</td>
+              <td class="label">{$form.payment_instrument_id.label} {help id="payment_instrument_id"}</td>
+              <td {$valueStyle}>{$form.payment_instrument_id.html}</td>
             </tr>
             <tr class="crm-contribution-form-block-trxn_id">
-              <td class="label">{$form.trxn_id.label}</td>
-              <td {$valueStyle}>{$form.trxn_id.html} {help id="id-trans_id"}</td>
+              <td class="label">{$form.trxn_id.label} {help id="id-trans_id"}</td>
+              <td {$valueStyle}>{$form.trxn_id.html}</td>
             </tr>
           </table>
         {/if}
