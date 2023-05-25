@@ -158,6 +158,12 @@
       {if $action neq 4}
         <div class="description">{ts}Display amount next to each option?{/ts}</div>
       {/if}
+      {if $action neq 4 && !empty($form.show_remaining.html)}
+        <tr class="crm-price-field-form-block-show_remaining">
+          <td class="label">{$form.show_remaining.label}</td>
+          <td>{$form.show_remaining.html} {help id="id-show_remaining" file="CRM/Price/Page/Field.hlp"}</td>
+        </tr>
+      {/if}
       </td>
     </tr>
     <tr class="crm-price-field-form-block-weight">

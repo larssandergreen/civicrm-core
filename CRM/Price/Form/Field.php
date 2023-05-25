@@ -296,6 +296,9 @@ class CRM_Price_Form_Field extends CRM_Core_Form {
         $this->add('text', 'option_max_value[' . $i . ']', ts('Max Participants'), $attributes['max_value']);
         $this->addRule('option_max_value[' . $i . ']', ts('Please enter a valid Max Participants.'), 'positiveInteger');
 
+        // show remaining?
+        $this->add('checkbox', 'show_remaining', ts('Show spaces left?'));
+
         // description
         //$this->add('textArea', 'option_description['.$i.']', ts('Description'), array('rows' => 1, 'cols' => 40 ));
       }
@@ -667,6 +670,7 @@ class CRM_Price_Form_Field extends CRM_Core_Form {
     }
 
     $params['is_display_amounts'] = CRM_Utils_Array::value('is_display_amounts', $params, FALSE);
+    $params['show_remaining'] = CRM_Utils_Array::value('show_remaining', $params, FALSE);
     $params['is_required'] = CRM_Utils_Array::value('is_required', $params, FALSE);
     $params['is_active'] = CRM_Utils_Array::value('is_active', $params, FALSE);
     $params['financial_type_id'] = CRM_Utils_Array::value('financial_type_id', $params, FALSE);

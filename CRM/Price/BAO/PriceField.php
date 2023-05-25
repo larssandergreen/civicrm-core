@@ -113,6 +113,7 @@ class CRM_Price_BAO_PriceField extends CRM_Price_DAO_PriceField {
           'amount' => trim($params['option_amount'][$index]),
           'count' => CRM_Utils_Array::value($index, CRM_Utils_Array::value('option_count', $params), NULL),
           'max_value' => CRM_Utils_Array::value($index, CRM_Utils_Array::value('option_max_value', $params), NULL),
+          'show_remaining' => CRM_Utils_Array::value($index, CRM_Utils_Array::value('show_remaining', $params), NULL),
           'description' => CRM_Utils_Array::value($index, CRM_Utils_Array::value('option_description', $params), NULL),
           'membership_type_id' => CRM_Utils_Array::value($index, CRM_Utils_Array::value('membership_type_id', $params), NULL),
           'weight' => $params['option_weight'][$index],
@@ -357,7 +358,10 @@ class CRM_Price_BAO_PriceField extends CRM_Price_DAO_PriceField {
         if (in_array($optionKey, $freezeOptions)) {
           self::freezeIfEnabled($element, $fieldOptions[$optionKey]);
           // CRM-14696 - Improve display for sold out price set options
-          $element->setLabel($label . '&nbsp;<span class="sold-out-option">' . ts('Sold out') . '</span>');
+        }
+        elseif ($field->show_remaining) {
+          $numberRemaining = $fieldOptions[$optionKey]['max_value'] - $fieldOptions[$optionKey]['total_option_count'];
+          $element->setLabel($label . '&nbsp;' . ts("(%1 left)", [1 => $numberRemaining]));
         }
 
         //CRM-10117
@@ -467,6 +471,10 @@ class CRM_Price_BAO_PriceField extends CRM_Price_DAO_PriceField {
             self::freezeIfEnabled($radioElement, $customOption[$radioElement->getValue()]);
             // CRM-14696 - Improve display for sold out price set options
             $radioElement->setText('<span class="sold-out-option">' . $radioElement->getText() . '&nbsp;(' . ts('Sold out') . ')</span>');
+          }
+          elseif ($field->show_remaining) {
+            $numberRemaining = $fieldOptions[$optionKey]['max_value'] - $fieldOptions[$optionKey]['total_option_count'];
+            $radioElement->setText($radioElement->getText() . '&nbsp;' . ts("(%1 left)", [1 => $numberRemaining]));
           }
         }
 

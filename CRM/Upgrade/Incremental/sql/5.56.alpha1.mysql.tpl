@@ -1,5 +1,8 @@
 {* file to handle db changes in 5.56.alpha1 during upgrade *}
 
+-- Add spaces remaining option for price field options
+ALTER TABLE `civicrm_price_field` ADD `show_remaining` BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Show how many spaces are remaining' AFTER `is_display_amounts`;
+
 -- dev/core#3905 Update data type for data to LONGTEXT
 ALTER TABLE civicrm_job_log MODIFY COLUMN data LONGTEXT COMMENT 'Potential extended data for specific job run (e.g. tracebacks).';
 

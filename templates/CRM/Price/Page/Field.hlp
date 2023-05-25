@@ -43,6 +43,13 @@
     {ts}If you want to limit the number of participants who can chose this option, enter that number here. This limit is separate from the maximum number of participants allowed to register for the event (you can set that number from Configure Event > Info and Settings). {/ts}
 {/htxt}
 
+{htxt id="id-show_remaining-title"}
+  {ts}Show spaces left?{/ts}
+{/htxt}
+{htxt id="id-show_remaining"}
+    {ts}This option will show the number of spaces remaining for each price option on registrations form, as long as Max Participants is set for that option.{/ts}
+{/htxt}
+
 {htxt id="id-visibility-title"}
   {ts}Visibility{/ts}
 {/htxt}

@@ -151,6 +151,18 @@
     </html>
   </field>
   <field>
+    <name>show_remaining</name>
+    <title>Show spaces remaining?</title>
+    <type>boolean</type>
+    <comment>Show how many spaces are remaining</comment>
+    <default>0</default>
+    <required>true</required>
+    <add>5.56</add>
+    <html>
+      <type>CheckBox</type>
+    </html>
+  </field>
+  <field>
     <name>options_per_line</name>
     <title>Price Field Options per Row</title>
     <type>int unsigned</type>
