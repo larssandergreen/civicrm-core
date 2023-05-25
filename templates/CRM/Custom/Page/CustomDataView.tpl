@@ -53,27 +53,19 @@
                     <tr>
                       <td class="label">{$element.field_title}</td>
                       <td class="html-adjust">
-                        {if $element.options_per_line != 0}
-                          {* sort by fails for option per line. Added a variable to iterate through the element array*}
-                          {foreach from=$element.field_value item=val}
-                            {$val}
-                            <br/>
-                          {/foreach}
-                        {else}
-                          {if $element.field_data_type == 'Money'}
-                            {if $element.field_type == 'Text'}
-                              {$element.data|crmMoney}
-                            {else}
-                              {$element.field_value}
-                            {/if}
+                        {if $element.field_data_type == 'Money'}
+                          {if $element.field_type == 'Text'}
+                            {$element.data|crmMoney}
                           {else}
-                            {if $element.field_data_type EQ 'ContactReference' && $element.contact_ref_links}
-                              {', '|implode:$element.contact_ref_links}
-                            {elseif $element.field_data_type == 'Memo'}
-                              {$element.field_value|nl2br}
-                            {else}
-                              {$element.field_value}
-                            {/if}
+                            {$element.field_value}
+                          {/if}
+                        {else}
+                          {if $element.field_data_type EQ 'ContactReference' && $element.contact_ref_links}
+                            {', '|implode:$element.contact_ref_links}
+                          {elseif $element.field_data_type == 'Memo'}
+                            {$element.field_value|nl2br}
+                          {else}
+                            {$element.field_value}
                           {/if}
                         {/if}
                       </td>
