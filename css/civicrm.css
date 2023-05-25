@@ -3010,12 +3010,13 @@ tbody.scrollContent tr.alternateRow {
 .crm-container .select2-container-multi .select2-choices .select2-search-choice {
   padding: 2px 5px 2px 18px;
 }
+/* putting a min-height: 15px in here fixes the issue, but how does that affect other CMSs? Probably needs to be fixed somehow. */
 .crm-container .select2-container-multi .select2-choices .select2-search-field input {
   padding: 4px;
   min-height: unset;  /* Overide style imposed by WordPress 5.3 - see https://lab.civicrm.org/dev/wordpress/issues/46 */
 }
 .crm-container .select2-search-choice-close {
-  top: 2px;
+  top: 3px;
 }
 .crm-container .select2-container .select2-choice abbr {
   top: 6px;
