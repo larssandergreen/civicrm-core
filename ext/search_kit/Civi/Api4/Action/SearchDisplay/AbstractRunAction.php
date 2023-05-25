@@ -206,6 +206,7 @@ abstract class AbstractRunAction extends \Civi\Api4\Generic\AbstractAction {
     switch ($column['type']) {
       case 'field':
       case 'html':
+      case 'blank':
         $rawValue = $data[$column['key']] ?? NULL;
         if (!$this->hasValue($rawValue) && isset($column['empty_value'])) {
           $out['val'] = $this->replaceTokens($column['empty_value'], $data, 'view');

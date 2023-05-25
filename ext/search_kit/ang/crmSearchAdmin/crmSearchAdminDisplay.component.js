@@ -75,6 +75,13 @@
           defaults: {
             path: ''
           }
+        },
+        blank: {
+          label: ts('Blank Column'),
+          icon: 'fa-square-o',
+          defaults: {
+          alignment: 'text-left'
+          }
         }
       };
 
