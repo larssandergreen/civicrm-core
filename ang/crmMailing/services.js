@@ -220,6 +220,18 @@
         return missing;
       },
 
+      // now need to do something like this https://github.com/civicrm/civicrm-core/blob/5db0bc3c1f54eaca4307f103a73bda596ae914d6/ang/crmMailing/EmailBodyCtrl.js
+      // Check for URLs that contain hard-coded checksums (not a token)
+      findHardCodedChecksums: function(mailing, field) {
+        var checksumMatches = {};
+        if (!_.isEmpty(mailing[field])) {
+          const regexChecksumURL = https?:\/\/[\S]+\?[\S]*cs\=[^\s\&\"\']+;
+          checksumMatches = mailing[field].match(regexChecksumURL);
+        }
+        return checksumMatches;
+      },
+
+
       // Copy all data fields in (mailingFrom) to (mailingTgt) -- except for (excludes)
       // ex: crmMailingMgr.mergeInto(newMailing, mailingTemplate, ['subject']);
       mergeInto: function mergeInto(mailingTgt, mailingFrom, excludes) {
