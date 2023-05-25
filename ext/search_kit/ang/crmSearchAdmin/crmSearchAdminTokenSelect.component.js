@@ -23,7 +23,10 @@
       };
 
       this.insertToken = function(key) {
-        ctrl.model[ctrl.field] = (ctrl.model[ctrl.field] || '') + '[' + key + ']';
+        //ctrl.model[ctrl.field] = (ctrl.model[ctrl.field] || '') + '[' + key + ']';
+        //ctrl.model[ctrl.field].selectionStart
+        // but this doesn't work because focus is off this field when clicking in the select
+        ctrl.model[ctrl.field] = ctrl.model[ctrl.field].slice(0,ctrl.model[ctrl.field].selectionStart) + '[' + key + ']' + ctrl.model[ctrl.field].slice(ctrl.model[ctrl.field].selectionEnd);
       };
 
       this.getTokens = function() {
