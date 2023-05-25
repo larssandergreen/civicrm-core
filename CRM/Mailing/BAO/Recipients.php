@@ -90,22 +90,32 @@ WHERE  mailing_id = %1
     $temporaryTable = CRM_Utils_SQL_TempTable::build()
       ->setCategory('sr' . $sourceMailingId)
       ->setMemory()
-      ->createWithColumns("mailing_recipient_id int unsigned, id int PRIMARY KEY AUTO_INCREMENT, INDEX(mailing_recipient_id)");
+      ->createWithColumns("mailing_recipient_id int unsigned, id int PRIMARY KEY AUTO_INCREMENT");
     $temporaryTableName = $temporaryTable->getName();
     $sql = "
-INSERT INTO {$temporaryTableName} (mailing_recipient_id)
-SELECT mr.id
-FROM   civicrm_mailing_recipients mr
-WHERE  mr.mailing_id = $sourceMailingId
-ORDER BY RAND()
-$limitString
+      INSERT INTO {$temporaryTableName} (mailing_recipient_id)
+      SELECT mr.id
+      FROM   civicrm_mailing_recipients mr
+      WHERE  mr.mailing_id = $sourceMailingId
     ";
     CRM_Core_DAO::executeQuery($sql);
     $sql = "
-UPDATE civicrm_mailing_recipients mr
-INNER JOIN {$temporaryTableName} temp_mr ON temp_mr.mailing_recipient_id = mr.id
-SET mr.mailing_id = $newMailingID
-     ";
+    SELECT
+      {$temporaryTableName}.mailing_recipient_id
+    FROM
+      (SELECT
+        FLOOR(RAND() * (SELECT MAX(id) FROM {$temporaryTableName})) AS random_num,
+        @num:=@num + 1
+       FROM
+         (SELECT @num:=0) AS a, {$temporaryTableName} LIMIT N) AS b,
+       {$temporaryTableName}
+       WHERE b.random_num={$temporaryTableName}.id
+    ";
+    $sql = "
+      UPDATE civicrm_mailing_recipients mr
+      INNER JOIN {$temporaryTableName} temp_mr ON temp_mr.mailing_recipient_id = mr.id
+      SET mr.mailing_id = $newMailingID
+    ";
     CRM_Core_DAO::executeQuery($sql);
     $temporaryTable->drop();
   }
