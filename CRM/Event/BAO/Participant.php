@@ -179,6 +179,8 @@ class CRM_Event_BAO_Participant extends CRM_Event_DAO_Participant implements \Ci
     if (empty($params['id']) ||
       (isset($params['status_id']) && $params['status_id'] != $status)
     ) {
+          // could make this 'Change Registration' when id is not empty - is $participant->status_id always specified if changing, must be?
+
       // Default status if not specified
       $participant->status_id = $participant->status_id ?: self::fields()['participant_status_id']['default'];
       CRM_Activity_BAO_Activity::addActivity($participant, 'Event Registration', $participant->contact_id);
