@@ -3,9 +3,28 @@
     <div class="alert alert-info">
       <p>{{:: ts('Compose and send a mass-mailing to the %1 selected contacts (you will be able to add or exclude additional groups of contacts in the next step).', {1: $ctrl.ids.length}) }}</p>
     </div>
-    <label for="crm-search-task-mailing-name">{{:: ts('Mailing Name') }} <span class="crm-marker">*</span></label>
-    <input required class="form-control" id="crm-search-task-mailing-name" ng-model="$ctrl.name">
+    <div>
+        <label><input type="radio" name="newOrCopy" ng-click="newOrCopy='new'" ng-init="newOrCopy='new'" checked="checked"> {{:: ts('New mailing') }}</label>
+        <label><input type="radio" name="newOrCopy" ng-click="newOrCopy='copy'"> {{:: ts('Copy a mailing') }}</label>
+    </div>
     <br>
+    <div ng-show="newOrCopy === 'new'">
+      <label for="crm-search-task-mailing-name">{{:: ts('Mailing Name') }} <span class="crm-marker">*</span></label>
+      <input ng-required="newMailing === 'new'" class="form-control" id="crm-search-task-mailing-name" ng-model="$ctrl.name">
+    </div>
+    <div class="crm-block" ng-form="subform" crm-ui-id-scope ng-show="newOrCopy === 'copy'">
+      <div crm-ui-field="{name: 'subform.mailing_id', title: ts('Select mailing')}">
+        <input
+          crm-entityref="{entity: 'Mailing', api: {sequential: 1}, select: {allowClear: true}}"
+          crm-ui-id="subform.mailing_id"
+          name="mailing_id"
+          id="crm-search-task-mailing-mailing_id"
+          ng-model="$ctrl.mailing_id"
+        />
+      </div>
+    </div>
+    <br>
+
     <div ng-if="!$ctrl.run" class="alert" ng-class="{'alert-success': $ctrl.recipientCount === $ctrl.ids.length, 'alert-danger': $ctrl.recipientCount === 0, 'alert-warning': $ctrl.recipientCount !== 0 && $ctrl.recipientCount &lt; $ctrl.ids.length}">
       <div ng-if="!$ctrl.recipientCount && $ctrl.recipientCount !== 0">
         <i class="crm-i fa-spinner fa-spin"></i>
