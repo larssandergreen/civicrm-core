@@ -7,6 +7,17 @@
  | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
 *}
+{htxt id="id-member_current_member_title"}
+  {ts}Active and Inactive Members{/ts}
+{/htxt}
+{htxt id="id-member_current_member"}
+  <ul>
+    <li>{ts}Select "Active" to display only contacts with a membership this is active — contacts who are current members. By default, active memberships are those with status Current, New or Grace, but these can be configured under Membership Status Rules.{/ts}</li>
+    <li>{ts}Select "Inactive" to display only contacts with a membership this is not active. By default, these are memberships with status Expired, Pending, Cancelled or Deceased.{/ts}</li>
+    <li>{ts}Note that if a contact has both an Expired and a Current membership, they will be selected by searching for both Active and Inactive memberships. If you need to find only contacts who both have an inactive membership and do not have an active membership, this search won't give you the results you want.{/ts}</li>
+  </ul>
+{/htxt}
+
 {htxt id="id-member_is_primary-title"}
   {ts}Primary Members{/ts}
 {/htxt}

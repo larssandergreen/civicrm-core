@@ -281,7 +281,7 @@ class CRM_Member_BAO_Query extends CRM_Core_BAO_Query {
       case 'membership_is_current_member':
         // We don't want to include all tests for sql OR CRM-7827
         $query->_where[$grouping][] = CRM_Contact_BAO_Query::buildClause("civicrm_membership_status.is_current_member", $op, $value, "Boolean");
-        $query->_qill[$grouping][] = $value ? ts('Is a current member') : ts('Is a non-current member');
+        $query->_qill[$grouping][] = $value ? ts('Has an active membership') : ts('Has an inactive membership');
         $query->_tables['civicrm_membership_status'] = $query->_whereTables['civicrm_membership_status'] = 1;
         return;
 
@@ -530,7 +530,7 @@ class CRM_Member_BAO_Query extends CRM_Core_BAO_Query {
     $form->addElement('text', 'member_source', ts('Source'));
     $form->add('number', 'membership_id', ts('Membership ID'), ['class' => 'four', 'min' => 1]);
 
-    $form->addYesNo('membership_is_current_member', ts('Current Member?'), TRUE);
+    $form->addRadio('membership_is_current_member', ts('Has a membership that is:'), [1 => ts('Active'), 0 => ts('Inactive')]);
     $form->addYesNo('member_is_primary', ts('Primary Member?'), TRUE);
     $form->addYesNo('member_pay_later', ts('Pay Later?'), TRUE);
 

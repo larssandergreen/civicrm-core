@@ -21,7 +21,7 @@
     {$form.member_source.html}
   </td>
   <td>
-    {$form.membership_is_current_member.label}<br />
+    {$form.membership_is_current_member.label} {help id="id-member_current_member" file="CRM/Member/Form/Search.hlp"}<br />
     {$form.membership_is_current_member.html}
   </td>
 </tr>
