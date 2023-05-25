@@ -25,6 +25,16 @@
 {/if}
 {/htxt}
 
+{htxt id ="required_unsubscribe"}
+  <p>{ts}As you are sending this mailing to a set of search results or selected contacts, you must choose at least one unsubscribe group.{/ts} {ts}Any contacts who unsubscribe will be removed from the recipient groups as usual and from all of the unsubscribe groups as well.{/ts}</p>
+  <p>{ts}Contacts who have been removed from any of the unsubscribe groups won't receive this mailing.{/ts} {ts}Next time, if you use the same unsubscribe group, the contacts who unsubscribed from this mailing won't receive the next one.{/ts}</p>
+{/htxt}
+
+{htxt id ="optional_unsubscribe"}
+  <p>{ts}Optionally, you can add additional unsubscribe groups.{/ts} {ts}Any contacts who unsubscribe will be removed from the recipient groups as usual and from all of the unsubscribe groups as well.{/ts}</p>
+  <p>{ts}Contacts who have been removed from any of the unsubscribe groups won't receive this mailing.{/ts}</p>
+{/htxt}
+
 {htxt id="html"}
   <p>{ts}You can choose to send BOTH an <strong>HTML</strong> and a plain <strong>TEXT</strong> version of your mailing, OR you can send a <strong>TEXT</strong> version only.{/ts}</p>
   <p>{ts}If you create only an <strong>HTML</strong> version, CiviMail will automatically create a <strong>TEXT</strong> version for your recipients who have chosen NOT to receive HTML email.{/ts}</p>

@@ -39,17 +39,36 @@ It could perhaps be thinned by 30-60% by making more directives.
     <div crm-ui-field="{name: 'subform.recipients', title: ts('Recipients'), required: true}">
       <div crm-mailing-block-recipients="{name: 'recipients', id: 'subform.recipients'}" crm-mailing="mailing" cm-ui-id="subform.recipients"></div>
     </div>
-    <span ng-controller="EditUnsubGroupCtrl">
-      <div crm-ui-field="{name: 'subform.baseGroup', title: ts('Unsubscribe Group')}" ng-if="isUnsubGroupRequired(mailing)">
-        <input
-          crm-entityref="{entity: 'Group', api: {params: {is_hidden: 0, is_active: 1}}, select: {allowClear:true, minimumInputLength: 0}}"
-          crm-ui-id="subform.baseGroup"
-          name="baseGroup"
-          ng-model="mailing.recipients.groups.base[0]"
-          ng-required="true"
-        />
+    <div ng-controller="EditUnsubGroupCtrl">
+      <div ng-switch="!!isUnsubGroupRequired(mailing)">
+        <div ng-switch-when="true">
+          <div crm-ui-field="{name: 'subform.baseGroup', title: ts('Unsubscribe Groups'), help: hs('required_unsubscribe')}">
+            <input
+              crm-entityref="{entity: 'Group', api: {params: {is_hidden: 0, is_active: 1}},
+                select: {allowClear:true, minimumInputLength: 0, multiple:true, width: '36em', dropdownAutoWidth: true}}"
+              crm-ui-id="subform.baseGroup"
+              name="baseGroup"
+              ng-model="mailing.recipients.groups.base"
+              ng-required="true"
+              ng-list
+            />
+          </div>
+        </div>
+        <div ng-switch-when="false">
+          <div crm-ui-field="{name: 'subform.baseGroupOptional', title: ts('Unsubscribe Groups'), help: hs('optional_unsubscribe')}">
+            <input
+              crm-entityref="{entity: 'Group', api: {params: {is_hidden: 0, is_active: 1}},
+                select: {allowClear:true, minimumInputLength: 0, multiple:true, width: '36em', dropdownAutoWidth: true, placeholder: ts('Optional additional Unsubscribe Groups')}}"
+              crm-ui-id="subform.baseGroupOptional"
+              name="baseGroupOptional"
+              ng-model="mailing.recipients.groups.base"
+              ng-required="false"
+              ng-list
+            />
+          </div>
+        </div>
       </div>
-    </span>
+    </div>
     <div crm-ui-field="{name: 'subform.subject', title: ts('Subject')}">
       <div style="float: right;">
         <input crm-mailing-token on-select="$broadcast('insert:subject', token.name)" tabindex="-1"/>

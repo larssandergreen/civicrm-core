@@ -22,8 +22,8 @@
           }
         });
         _.each(mailing.recipients.groups.base, function(id) {
-          if (-1 == gids.indexOf(id)) {
-            gids.push(id);
+          if (-1 == gids.indexOf(parseInt(id))) {
+            gids.push(parseInt(id));
           }
         });
         if (!_.isEmpty(gids)) {

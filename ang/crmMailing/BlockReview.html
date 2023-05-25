@@ -21,6 +21,11 @@ Required vars: mailing, attachments
           </div>
         </div>
       </div>
+      <div ng-controller="ViewUnsubGroupCtrl">
+        <div crm-ui-field="{title: ts('Unsubscribe Groups')}" ng-if="getBasesAsString(mailing)">
+          {{getBasesAsString(mailing)}}
+        </div>
+      </div>
       <div crm-ui-field="{title: ts('Content')}">
         <span ng-show="mailing.body_html"><a crm-icon="fa-television" class="crm-hover-button action-item" ng-click="previewMailing(mailing, 'html')">{{:: ts('HTML') }}</a></span>
         <span ng-show="mailing.body_html || mailing.body_text"><a crm-icon="fa-file-text-o" class="crm-hover-button action-item" ng-click="previewMailing(mailing, 'text')">{{:: ts('Plain Text') }}</a></span>

@@ -708,9 +708,23 @@ if (!CRM.vars) CRM.vars = {};
           return txt;
         };
         selectParams.formatNoMatches = function() {
+                console.log('el');
+
+        console.log($el);
+                console.log('$el.data()');
+
+        console.log($el.data());
+        console.log('select-params');
+        console.log($el.data('select-params'));
+                        console.log('formatnomatches');
+
+        console.log($el.data('select-params').formatNoMatches);
           var txt = $el.data('select-params').formatNoMatches || $.fn.select2.defaults.formatNoMatches;
           txt += entityRefFiltersMarkup($el) + renderEntityRefCreateLinks($el);
+                            console.log(txt);
+
           return txt;
+
         };
         $el.on('select2-open.crmEntity', function() {
           var $el = $(this);

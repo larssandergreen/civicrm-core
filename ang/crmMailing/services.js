@@ -353,6 +353,8 @@
       // @return Promise
       save: function(mailing) {
         var params = angular.extend({}, mailing, mailing.recipients);
+        console.log(params);
+
 
         // Angular ngModel sometimes treats blank fields as undefined.
         angular.forEach(mailing, function(value, key) {
