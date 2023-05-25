@@ -198,6 +198,11 @@ class CRM_Event_Form_Registration_Register extends CRM_Event_Form_Registration {
     if ($this->_allowConfirmation) {
       CRM_Event_Form_EventFees::preProcess($this);
     }
+    // i think we need to save this somehow - or do I need to set this as a property above?
+    error_log('source ' . CRM_Utils_Request::retrieve('utm_source', 'String'));
+    if ($utmSource = CRM_Utils_Request::retrieve('utm_source', 'String')) {
+      $this->assign('utmSource', $utmSource);
+    }
   }
 
   /**
@@ -1160,6 +1165,7 @@ class CRM_Event_Form_Registration_Register extends CRM_Event_Form_Registration {
       $this->_params = [];
       $this->_params[] = $params;
       $this->set('params', $this->_params);
+     error_log('source' . $params['participant_source']);
 
       if (
         empty($params['additional_participants'])
