@@ -93,6 +93,7 @@ abstract class AbstractRunAction extends \Civi\Api4\Generic\AbstractAction {
     $this->loadSavedSearch();
     $this->loadSearchDisplay();
 
+// maybe do something in here to set a flag if user has all permissions?
     // Displays with acl_bypass must be embedded on an afform which the user has access to
     if (
       $this->checkPermissions && !empty($this->display['acl_bypass']) &&
@@ -116,6 +117,7 @@ abstract class AbstractRunAction extends \Civi\Api4\Generic\AbstractAction {
    * @return array{data: array, columns: array}[]
    */
   protected function formatResult(iterable $result): array {
+  $time_start1 = microtime(true);
     $rows = [];
     $keyName = CoreUtil::getIdFieldName($this->savedSearch['api_entity']);
     foreach ($result as $index => $record) {
@@ -137,6 +139,11 @@ abstract class AbstractRunAction extends \Civi\Api4\Generic\AbstractAction {
       }
       $rows[] = $row;
     }
+                                              $time_end1 = microtime(true);
+
+$execution_time1 = ($time_end1 - $time_start1);
+
+error_log('Total Execution Time: '.$execution_time1.' seconds');
     return $rows;
   }
 
@@ -432,15 +439,21 @@ abstract class AbstractRunAction extends \Civi\Api4\Generic\AbstractAction {
    * @return array{text: string, url: string, target: string, style: string, icon: string}[]
    */
   private function formatLinksColumn($column, $data): array {
+
     $out = ['links' => []];
     if (isset($column['text'])) {
       $out['text'] = $this->replaceTokens($column['text'], $data, 'view');
     }
+
     foreach ($column['links'] as $item) {
+
       if (!$this->checkLinkCondition($item, $data)) {
         continue;
       }
+
+
       $path = $this->replaceTokens($this->getLinkPath($item, $data), $data, 'url');
+
       if ($path) {
         $link = [
           'text' => $this->replaceTokens($item['text'] ?? '', $data, 'view'),
@@ -453,7 +466,10 @@ abstract class AbstractRunAction extends \Civi\Api4\Generic\AbstractAction {
         }
         $out['links'][] = $link;
       }
+
     }
+
+
     return $out;
   }
 
@@ -488,6 +504,7 @@ abstract class AbstractRunAction extends \Civi\Api4\Generic\AbstractAction {
    * @return string|null
    */
   private function getLinkPath($link, $data = NULL, $index = 0) {
+
     $path = $link['path'] ?? NULL;
     if (!$path && !empty($link['entity']) && !empty($link['action'])) {
       $entity = $link['entity'];
@@ -509,28 +526,50 @@ abstract class AbstractRunAction extends \Civi\Api4\Generic\AbstractAction {
       if ($prefix) {
         $path = str_replace('[', '[' . $prefix, $path);
       }
+
       // Check access for edit/update/delete links
       // (presumably if a record is shown in SearchKit the user already has view access, and the check is expensive)
       if ($path && isset($data) && !in_array($link['action'], ['view', 'preview'], TRUE)) {
         $id = $data[$prefix . $idKey] ?? NULL;
         $id = is_array($id) ? $id[$index] ?? NULL : $id;
+
+
+
         if ($id) {
           $values = [$idField => $id];
           // If not aggregated, add other values to help checkAccess be efficient
           if (!is_array($data[$prefix . $idKey])) {
             $values += \CRM_Utils_Array::filterByPrefix($data, $prefix);
           }
+// this is silly, shouldn't this be checked once per column, not once per link? but is there an ACL factor?
+//     // Super-admins always have access to everything
+//    if (\CRM_Core_Permission::check('all CiviCRM permissions and ACLs', $userID)) {
+  //    return TRUE;
+  // the other option would be to only check in js when clicking on the menu and only do this rigamorole if we are using links or buttons
+  // the time taken for these api calls are essentially 100% of the execution time for queries, including ones with multiple joins
+
+                              $time_start = microtime(true);
+                              error_log(print_r($values,true));
+
           $access = civicrm_api4($link['entity'], 'checkAccess', [
             // Fudge links with funny action names to check 'update'
             'action' => $link['action'] === 'delete' ? 'delete' : 'update',
-            'values' => $values,
+            'values' => ['id' => $values['id']],
           ], 0)['access'];
+
+                                          $time_end = microtime(true);
+
+$execution_time = ($time_end - $time_start);
+
+error_log('Total Execution Time: '.$execution_time.' seconds');
           if (!$access) {
             return NULL;
+
           }
         }
       }
     }
+
     return $path;
   }
 

@@ -69,7 +69,7 @@ class Download extends AbstractRunAction {
     $this->applyFilters();
 
     $apiResult = civicrm_api4($entityName, 'get', $apiParams);
-
+// is there some way to remove the menu or list column here?
     $rows = $this->formatResult($apiResult);
 
     $columns = [];
