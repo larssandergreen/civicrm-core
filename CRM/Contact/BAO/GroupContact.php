@@ -139,7 +139,7 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact implemen
   }
 
   /**
-   * Given an array of contact ids, remove all the contacts from the group
+   * Given an array of contact ids, remove or delete all the contacts from the group
    *
    * @param array $contactIds
    *   (reference ) the array of contact ids to be removed.
@@ -148,10 +148,11 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact implemen
    *
    * @param string $method
    * @param string $status
+   *   'Removed' or 'Deleted'
    * @param string $tracking
    *
    * @return array
-   *   (total, removed, notRemoved) count of contacts removed to group
+   *   (total, removed, notRemoved) count of contacts removed/deleted from group
    */
   public static function removeContactsFromGroup(
     &$contactIds,
@@ -163,79 +164,70 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact implemen
     if (!is_array($contactIds)) {
       return [0, 0, 0];
     }
-    if ($status == 'Removed' || $status == 'Deleted') {
-      $op = 'delete';
-    }
-    else {
-      $op = 'edit';
-    }
+    CRM_Utils_Hook::pre('delete', 'GroupContact', $groupId, $contactIds);
 
-    CRM_Utils_Hook::pre($op, 'GroupContact', $groupId, $contactIds);
-
-    $date = date('YmdHis');
     $numContactsRemoved = 0;
     $numContactsNotRemoved = 0;
 
-    $group = new CRM_Contact_DAO_Group();
-    $group->id = $groupId;
-    $group->find(TRUE);
-
     foreach ($contactIds as $contactId) {
+      $groupContact = new CRM_Contact_DAO_GroupContact();
+      $groupContact->group_id = $groupId;
+      $groupContact->contact_id = $contactId;
+      $groupContact->find(TRUE);
+
+      $historyParams = [
+        'group_id' => $groupId,
+        'contact_id' => $contactId,
+        'status' => $status,
+        'method' => $method,
+        'date' => date('YmdHis'),
+        'tracking' => $tracking,
+      ];
+
       if ($status == 'Deleted') {
-        $query = "DELETE FROM civicrm_group_contact WHERE contact_id = %1 AND group_id = %2";
-        $dao = CRM_Core_DAO::executeQuery($query, [
-          1 => [$contactId, 'Positive'],
-          2 => [$groupId, 'Positive'],
-        ]);
-        $historyParams = [
-          'group_id' => $groupId,
-          'contact_id' => $contactId,
-          'status' => $status,
-          'method' => $method,
-          'date' => $date,
-          'tracking' => $tracking,
-        ];
-        CRM_Contact_BAO_SubscriptionHistory::create($historyParams);
-        // Removing a row from civicrm_group_contact for a smart group may mean a contact
-        // Is now back in a group based on criteria so we will invalidate the cache if it is there
-        // So that accurate group cache is created next time it is needed.
-        CRM_Contact_BAO_GroupContactCache::invalidateGroupContactCache($groupId);
+        if ($groupContact->find(TRUE)) {
+          $groupContact->delete();
+          $numContactsRemoved++;
+          CRM_Contact_BAO_SubscriptionHistory::create($historyParams);
+        }
+        else {
+          $numContactsNotRemoved++;
+        }
       }
-      else {
-        $groupContact = new CRM_Contact_DAO_GroupContact();
-        $groupContact->group_id = $groupId;
-        $groupContact->contact_id = $contactId;
-        // check if the selected contact id already a member, or if this is
-        // an opt-out of a smart group.
-        // if not a member remove to groupContact else keep the count of contacts that are not removed
-        if ($groupContact->find(TRUE) || $group->saved_search_id) {
-          // remove the contact from the group
+
+      elseif ($status == 'Removed') {
+        if ($groupContact->status != 'Removed') {
+          $groupContact->status = $status;
+          $groupContact->save();
           $numContactsRemoved++;
         }
         else {
           $numContactsNotRemoved++;
         }
-
-        //now we grant the negative membership to contact if not member. CRM-3711
-        $historyParams = [
-          'group_id' => $groupId,
-          'contact_id' => $contactId,
-          'status' => $status,
-          'method' => $method,
-          'date' => $date,
-          'tracking' => $tracking,
-        ];
         CRM_Contact_BAO_SubscriptionHistory::create($historyParams);
-        $groupContact->status = $status;
-        $groupContact->save();
+
         // Remove any rows from the group contact cache so it disappears straight away from smart groups.
         CRM_Contact_BAO_GroupContactCache::removeContact($contactId, $groupId);
       }
     }
 
+    // Removing a row from civicrm_group_contact for a smart group may mean a contact
+    // Is now back in a group based on criteria so we will invalidate the cache if it is there
+    // So that accurate group cache is created next time it is needed.
+    if ($status == 'Deleted') {
+      CRM_Contact_BAO_GroupContactCache::invalidateGroupContactCache($groupId);
+    }
     CRM_Contact_BAO_Contact_Utils::clearContactCaches();
 
-    CRM_Utils_Hook::post($op, 'GroupContact', $groupId, $contactIds);
+    CRM_Utils_Hook::post('delete', 'GroupContact', $groupId, $contactIds);
+    // problem is the returned values are used elsewhere, not just for counts, so since these are changed, need to be super sure they won't mess anything up
+    // or we go back to also adding $numContactsRemoved++; for all smart group members
+    // could report this is a smart group or parent, may have been removed, maybe not when relevant
+// https://github.com/civicrm/civicrm-core/blob/9c864381c85bb21e12fd04f9a6187fa57cbf2003/CRM/Contact/Form/Task/RemoveFromGroup.php#L60
+// not sure what this unsub is about
+// https://github.com/civicrm/civicrm-core/blob/d6a6364a87aa97a26a4aee0d8561e30c885e0e8f/CRM/Mailing/Event/BAO/Unsubscribe.php#L304
+// and then api
+// https://github.com/civicrm/civicrm-core/blob/f0ca10cfa8ddfc861c59a9ca70561aa952b88461/api/v3/GroupContact.php#L248
 
     return [count($contactIds), $numContactsRemoved, $numContactsNotRemoved];
   }

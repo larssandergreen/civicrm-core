@@ -135,42 +135,37 @@ class CRM_Contact_Page_View_GroupContact extends CRM_Core_Page {
    */
   public static function del($groupContactId, $status, $contactID) {
     $groupId = CRM_Contact_BAO_GroupContact::getGroupId($groupContactId);
-
-    switch ($status) {
-      case 'i':
-        $groupStatus = 'Added';
-        break;
-
-      case 'p':
-        $groupStatus = 'Pending';
-        break;
-
-      case 'o':
-        $groupStatus = 'Removed';
-        break;
-
-      case 'd':
-        $groupStatus = 'Deleted';
-        break;
-    }
-
-    $groupNum = CRM_Contact_BAO_GroupContact::getContactGroup($contactID, 'Added', NULL, TRUE, TRUE);
-    if ($groupNum == 1 && $groupStatus == 'Removed' && Civi::settings()->get('is_enabled')) {
-      CRM_Core_Session::setStatus(ts('Please ensure at least one contact group association is maintained.'), ts('Could Not Remove'));
-      return FALSE;
-    }
-
     $ids = [$contactID];
     $method = 'Admin';
 
     $session = CRM_Core_Session::singleton();
     $userID = $session->get('userID');
-
     if ($userID == $contactID) {
       $method = 'Web';
     }
 
-    CRM_Contact_BAO_GroupContact::removeContactsFromGroup($ids, $groupId, $method, $groupStatus);
+    switch ($status) {
+      case 'i':
+        CRM_Contact_BAO_GroupContact::addContactsToGroup($ids, $groupId, $method, 'Added');
+        break;
+
+      case 'p':
+        CRM_Contact_BAO_GroupContact::addContactsToGroup($ids, $groupId, $method, 'Pending');
+        break;
+
+      case 'o':
+        $groupNum = CRM_Contact_BAO_GroupContact::getContactGroup($contactID, 'Added', NULL, TRUE, TRUE);
+        if ($groupNum == 1 && Civi::settings()->get('is_enabled')) {
+          CRM_Core_Session::setStatus(ts('Please ensure at least one contact group association is maintained.'), ts('Could Not Remove'));
+          return FALSE;
+        }
+        CRM_Contact_BAO_GroupContact::removeContactsFromGroup($ids, $groupId, $method, 'Removed');
+        break;
+
+      case 'd':
+        CRM_Contact_BAO_GroupContact::removeContactsFromGroup($ids, $groupId, $method, 'Deleted');
+        break;
+    }
   }
 
 }
