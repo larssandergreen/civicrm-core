@@ -2137,6 +2137,11 @@ ORDER BY civicrm_email.is_primary DESC";
     $session = CRM_Core_Session::singleton();
     foreach ($params as $key => $value) {
       [$fieldName, $locTypeId, $typeId] = CRM_Utils_System::explode('-', $key, 3);
+      if ($contactID && array_key_exists($fieldName,$fields) && isset($fields[$fieldName]['is_view']) && $fields[$fieldName]['is_view']) {
+              error_log('continued for' . $fieldName);
+
+        continue;
+      }
 
       if ($locTypeId == 'Primary') {
         if ($contactID) {
