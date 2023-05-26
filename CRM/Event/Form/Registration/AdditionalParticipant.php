@@ -347,7 +347,7 @@ class CRM_Event_Form_Registration_AdditionalParticipant extends CRM_Event_Form_R
       if ($includeSkipButton) {
         $buttons = array_merge($buttons, [
           [
-            'type' => 'next',
+            'type' => 'button',
             'name' => ts('Skip Participant'),
             'subName' => 'skip',
             'icon' => 'fa-fast-forward',
