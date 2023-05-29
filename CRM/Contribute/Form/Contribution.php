@@ -1790,7 +1790,7 @@ class CRM_Contribute_Form_Contribution extends CRM_Contribute_Form_AbstractEditP
         unset($params['note']);
       }
       $contribution = CRM_Contribute_BAO_Contribution::create($params);
-
+// the problem is that somewhere above here, three line items are being created and that's no good
       $previousStatus = CRM_Core_PseudoConstant::getName('CRM_Contribute_BAO_Contribution', 'contribution_status_id', $this->_values['contribution_status_id'] ?? NULL);
       // process associated membership / participant, CRM-4395
       if ($contribution->id && $action & CRM_Core_Action::UPDATE

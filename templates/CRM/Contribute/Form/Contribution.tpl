@@ -241,9 +241,7 @@
         <legend>
           {ts}Payment Details{/ts}
         </legend>
-        {if $isUsePaymentBlock}
-          {include file="CRM/Contribute/Form/PaymentInfoBlock.tpl"}
-        {else}
+        {if !$isUsePaymentBlock OR ($contribution_status_id EQ 2)}
           <table class="form-layout-compressed" >
             <tr class="crm-contribution-form-block-payment_instrument_id">
               <td class="label">{$form.payment_instrument_id.label}</td>
@@ -255,10 +253,13 @@
             </tr>
           </table>
         {/if}
+        {if $isUsePaymentBlock}
+          {include file="CRM/Contribute/Form/PaymentInfoBlock.tpl"}
+        {/if}
       </fieldset>
     {/if}
 
-    {if !$isUsePaymentBlock}
+    {if !$isUsePaymentBlock OR ($contribution_status_id EQ 2)}
       {include file='CRM/Core/BillingBlockWrapper.tpl'}
     {/if}
 
