@@ -617,7 +617,7 @@ WHERE  id = %1";
         if (!empty($form->_priceSet['fields'])) {
           foreach ($form->_priceSet['fields'] as $field) {
             foreach ($field['options'] as $option) {
-              $maxVal = CRM_Utils_Array::value('max_value', $option, 0);
+              $maxVal = CRM_Utils_Array::value('max_value', $option, NULL);
               $optionsMaxValueDetails['fields'][$field['id']]['options'][$option['id']] = $maxVal;
               $optionsMaxValueTotal += $maxVal;
             }

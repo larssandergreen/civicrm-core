@@ -691,7 +691,7 @@ class CRM_Event_Form_Registration extends CRM_Core_Form {
       if (!empty($form->_priceSet['fields'])) {
         foreach ($form->_priceSet['fields'] as $field) {
           foreach ($field['options'] as $option) {
-            $maxVal = CRM_Utils_Array::value('max_value', $option, 0);
+            $maxVal = CRM_Utils_Array::value('max_value', $option, NULL);
             $optionsMaxValueDetails['fields'][$field['id']]['options'][$option['id']] = $maxVal;
             $optionsMaxValueTotal += $maxVal;
           }
@@ -1066,10 +1066,10 @@ class CRM_Event_Form_Registration extends CRM_Core_Form {
       $priceSetFields = $priceSet['optionsCountDetails']['fields'];
     }
 
-    if (!empty($priceSet['optionsMaxValueTotal'])) {
+    if ($priceSet['optionsMaxValueTotal'] >= 0) {
       $priceMaxFieldDetails = $priceSet['optionsMaxValueDetails']['fields'];
     }
-
+// this is getting ugly
     $addParticipantNum = substr($form->_name, 12);
     foreach ($params as $pCnt => $values) {
       if ($values == 'skip' ||
@@ -1305,7 +1305,7 @@ class CRM_Event_Form_Registration extends CRM_Core_Form {
     $optionsCountDetails = $optionsMaxValueDetails = [];
     if (
       isset($priceSetDetails['optionsMaxValueTotal'])
-      && $priceSetDetails['optionsMaxValueTotal']
+      && $priceSetDetails['optionsMaxValueTotal'] >= 0;
     ) {
       $hasOptMaxValue = TRUE;
       $optionsMaxValueDetails = $priceSetDetails['optionsMaxValueDetails']['fields'];
