@@ -109,20 +109,6 @@
       <td>&nbsp;</td>
       <td>{$form.is_active.html} {$form.is_active.label}</td>
     </tr>
-
-    {if $eventID}
-      <tr class="crm-event-manage-eventinfo-form-block-info_link">
-        <td>&nbsp;</td>
-        <td class="description">
-          {if $config->userSystem->is_drupal || $config->userFramework EQ 'WordPress'}
-            {ts}When this Event is active, create links to the Event Information page by copying and pasting the following URL:{/ts}<br />
-            <strong>{crmURL a=1 fe=1 p='civicrm/event/info' q="reset=1&id=`$eventID`"}</strong>
-          {elseif $config->userFramework EQ 'Joomla'}
-            {ts 1=$eventID}When this Event is active, create front-end links to the Event Information page using the Menu Manager. Select <strong>Event Info Page</strong> and enter <strong>%1</strong> for the Event ID.{/ts}
-          {/if}
-        </td>
-      </tr>
-    {/if}
     <tr>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
