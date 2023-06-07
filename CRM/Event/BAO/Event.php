@@ -20,10 +20,11 @@ class CRM_Event_BAO_Event extends CRM_Event_DAO_Event implements \Civi\Core\Hook
    * @deprecated
    * @param array $params
    * @param array $defaults
+   * @param bool $returnNulls
    * @return self|null
    */
-  public static function retrieve($params, &$defaults) {
-    return self::commonRetrieve(self::class, $params, $defaults);
+  public static function retrieve($params, &$defaults, $returnNulls) {
+    return self::commonRetrieve(self::class, $params, $defaults, NULL, $returnNulls);
   }
 
   /**

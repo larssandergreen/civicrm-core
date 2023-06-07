@@ -815,12 +815,14 @@ class CRM_Core_DAO extends DB_DataObject {
    *   The object that we are extracting data from.
    * @param array $values
    *   (reference ) associative array of name/value pairs.
+   * @param bool $returnNulls
+   *   Return all fields, including those that are NULL
    */
-  public static function storeValues(&$object, &$values) {
+  public static function storeValues(&$object, &$values, $returnNulls = FALSE) {
     $fields = $object->fields();
     foreach ($fields as $name => $value) {
       $dbName = $value['name'];
-      if (isset($object->$dbName) && $object->$dbName !== 'null') {
+      if ($returnNulls || (isset($object->$dbName) && $object->$dbName !== 'null')) {
         $values[$dbName] = $object->$dbName;
         if ($name != $dbName) {
           $values[$name] = $object->$dbName;
@@ -1513,10 +1515,12 @@ LIKE %1
    *   (reference) an assoc array to hold the flattened values.
    * @param array $returnProperities
    *   An assoc array of fields that need to be returned, e.g. ['first_name', 'last_name'].
+   * @param bool $returnNulls
+   *   Return all fields, including those that are NULL
    *
    * @return static|null
    */
-  public static function commonRetrieve($daoName, &$params, &$defaults, $returnProperities = NULL) {
+  public static function commonRetrieve($daoName, &$params, &$defaults, $returnProperities = NULL, $returnNulls = FALSE) {
     $object = new $daoName();
     $object->copyValues($params);
 
@@ -1527,7 +1531,7 @@ LIKE %1
     }
 
     if ($object->find(TRUE)) {
-      self::storeValues($object, $defaults);
+      self::storeValues($object, $defaults, $returnNulls);
       return $object;
     }
     return NULL;
