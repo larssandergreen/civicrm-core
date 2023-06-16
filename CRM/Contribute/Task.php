@@ -111,6 +111,14 @@ class CRM_Contribute_Task extends CRM_Core_Task {
           'title' => ts('Invoices - print or email'),
           'class' => 'CRM_Contribute_Form_Task_Invoice',
           'result' => FALSE,
+          'url' => 'civicrm/contribute/invoice/email',
+          // uncommenting the URL breaks the gettasks, get an error about the session key?
+          //     "<em class=\"placeholder\">TypeError</em>: strpos(): Argument #1 ($haystack) must be of type string, array given in <em class=\"placeholder\">strpos()</em> (line <em class=\"placeholder\">156</em> of <em class=\"placeholder\">/Users/larssander-green/buildkit/build/drupaltest/web/sites/all/modules/civicrm/CRM/Core/Key.php</em>)."
+          // but using the email url does work, except PDF has smarty error in it and email is actually a PDF in content
+          // also redirects to contribution after
+          // and only seems to get one contribution
+          // need to look at how one of the examples above works
+          'key' => 'invoice',
         ],
       ];
 
