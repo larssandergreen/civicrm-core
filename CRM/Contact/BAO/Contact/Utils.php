@@ -257,11 +257,25 @@ WHERE  id IN ( $idString )
     }
     if (!is_numeric($employerID)) {
       $dupeIDs = CRM_Contact_BAO_Contact::getDuplicateContacts(['organization_name' => $employerID], 'Organization', 'Unsupervised', [], FALSE);
-      $employerID = (int) (reset($dupeIDs) ?: Contact::create(FALSE)
-        ->setValues([
-          'contact_type' => 'Organization',
-          'organization_name' => $employerID,
-        ])->execute()->first()['id']);
+      if (!empty($dupeIDs)) {
+        $employerID = (int) (reset($dupeIDs));
+      }
+      else {
+        $contact = \Civi\Api4\Contact::get()
+          ->addSelect('employer_id.organization_name', 'employer_id')
+          ->addWhere('id', '=', $contactID)
+          ->execute()->first();
+        if ($contact && ($contact['employer_id.organization_name'] === $employerID)) {
+          $employerID = $contact['employer_id'];
+        }
+        else {
+          $employerID = Contact::create(FALSE)
+            ->setValues([
+              'contact_type' => 'Organization',
+              'organization_name' => $employerID,
+            ])->execute()->first()['id'];
+        }
+      }
     }
 
     $relationshipTypeID = CRM_Contact_BAO_RelationshipType::getEmployeeRelationshipTypeID();
