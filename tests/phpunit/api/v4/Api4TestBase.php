@@ -20,9 +20,7 @@
 namespace api\v4;
 
 use Civi\Api4\UFMatch;
-use Civi\Test;
 use Civi\Test\Api4TestTrait;
-use Civi\Test\CiviEnvBuilder;
 use Civi\Test\HeadlessInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -43,11 +41,6 @@ class Api4TestBase extends TestCase implements HeadlessInterface {
   public function __construct($name = NULL, array $data = [], $dataName = '') {
     parent::__construct($name, $data, $dataName);
     error_reporting(E_ALL);
-  }
-
-  public function setUpHeadless(): CiviEnvBuilder {
-    // TODO: search_kit should probably be part of the 'headless()' baseline.
-    return Test::headless()->install(['org.civicrm.search_kit'])->apply();
   }
 
   /**
