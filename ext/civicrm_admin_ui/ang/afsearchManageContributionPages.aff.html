@@ -3,8 +3,8 @@
 </div>
 <div af-fieldset="">
   <div class="af-container af-layout-inline">
-    <af-field name="title" defn="{label: 'Title', input_attrs: {}, help_post: 'Complete OR partial Contribution Page Title'}" />
-    <af-field name="financial_type_id" defn="{input_type: 'CheckBox', input_attrs: {}}" />
+    <af-field name="title" defn="{label: 'Page Title'}" />
+    <af-field name="financial_type_id" defn="{input_attrs: {multiple: true, placeholder: '-any Financial Type-'}}" />
   </div>
   <div class="btn-group pull-right">
     <a class="btn btn-primary" ng-href="{{:: crmUrl('civicrm/admin/pcp', {reset: 1}) }}">
