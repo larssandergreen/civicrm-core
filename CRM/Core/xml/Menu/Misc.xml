@@ -261,6 +261,11 @@
     <access_arguments>access CiviCRM</access_arguments>
   </item>
   <item>
+    <path>civicrm/task/make-member-mailing-label</path>
+    <page_callback>CRM_Member_Form_Task_Label</page_callback>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
+  <item>
     <path>civicrm/task/pick-profile</path>
     <page_callback>CRM_Contact_Form_Task_PickProfile</page_callback>
     <access_arguments>access CiviCRM</access_arguments>

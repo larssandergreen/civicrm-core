@@ -225,6 +225,27 @@ class GetSearchTasks extends \Civi\Api4\Generic\AbstractAction {
       }
     }
 
+    if ($entity['name'] === 'Membership') {
+      // FIXME: tasks() function always checks permissions, should respect `$this->checkPermissions`
+      foreach (\CRM_Member_Task::tasks() as $id => $task) {
+        if (!empty($task['url'])) {
+          $path = explode('?', $task['url'], 2)[0];
+          $menu = \CRM_Core_Menu::get($path);
+          $key = \CRM_Core_Key::get($menu['page_callback'], TRUE);
+
+          $tasks[$entity['name']]['membership.' . $id] = [
+            'title' => $task['title'],
+            'icon' => $task['icon'] ?? 'fa-gear',
+            'crmPopup' => [
+              'path' => "'{$task['url']}'",
+              'data' => "{id: ids.join(','), qfKey: '$key'}",
+            ],
+          ];
+        }
+      }
+    }
+    // I think requires_edit_contact_permission is maybe messing this up, because I get a don't have permission error
+
     // Call `hook_civicrm_searchKitTasks` which serves 3 purposes:
     // 1. For extensions to augment this list of tasks
     // 2. To allow tasks to be added/removed per search display

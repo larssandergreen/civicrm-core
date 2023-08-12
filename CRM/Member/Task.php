@@ -99,6 +99,8 @@ class CRM_Member_Task extends CRM_Core_Task {
         // Transitional key. May change.
         'requires_edit_contact_permission' => TRUE,
         'result' => TRUE,
+        'url' => 'civicrm/task/make-member-mailing-label',
+        'icon' => 'fa-print',
       ],
       self::PDF_LETTER => [
         'title' => ts('Print/merge document for memberships'),
