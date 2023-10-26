@@ -85,7 +85,9 @@ class Download extends AbstractRunAction {
     $rows = $this->formatResult($apiResult);
 
     $columns = [];
-    foreach ($this->display['settings']['columns'] as $index => $col) {
+    // $rows are re-indexed after removing non-exportable columns, we need to re-index columns to match
+    $index = 0;
+    foreach ($this->display['settings']['columns'] as $col) {
       $col += ['type' => NULL, 'label' => '', 'rewrite' => FALSE];
       $columns[$index] = $col;
       // Convert html to plain text
@@ -95,6 +97,7 @@ class Download extends AbstractRunAction {
           $rows[$i] = $row;
         }
       }
+      $index++;
     }
 
     // Unicode-safe filename for download
