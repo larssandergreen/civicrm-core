@@ -1074,7 +1074,9 @@ class CRM_Event_Form_Registration_Confirm extends CRM_Event_Form_Registration {
         ->execute();
       foreach ($uFGroups as $uFGroup) {
         if (!empty($uFGroup['add_to_group_id'])) {
-          $addToGroups[$uFGroup['add_to_group_id']] = $uFGroup['add_to_group_id'];
+          foreach (empty($uFGroup['add_to_group_id']) as $addToGroup) {
+            $addToGroups[$addToGroup] = $addToGroup;
+          }
         }
       }
     }

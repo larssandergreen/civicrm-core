@@ -641,8 +641,8 @@ class CRM_Contact_BAO_ContactTest extends CiviUnitTestCase {
    * Test case for createProfileContact.
    */
   public function testCreateProfileContact(): void {
-    //Create 3 groups.
-    foreach (['group1', 'group2', 'group3'] as $key => $title) {
+    //Create 4 groups.
+    foreach (['group1', 'group2', 'group3', 'group4'] as $key => $title) {
       $this->ids['Group']["id{$key}"] = $this->callAPISuccess('Group', 'create', [
         'title' => $title,
         'visibility' => 'Public Pages',
@@ -707,10 +707,12 @@ class CRM_Contact_BAO_ContactTest extends CiviUnitTestCase {
     $createParams = array_merge($contactParams, $profileParams);
 
     //create the contact using create profile contact.
-    $contactId = CRM_Contact_BAO_Contact::createProfileContact($createParams, $fields, NULL, NULL, NULL, NULL, TRUE);
+    $contactId = CRM_Contact_BAO_Contact::createProfileContact($createParams, $fields, NULL, [$this->ids['Group']['id3']], NULL, NULL, TRUE);
 
     //Make sure contact is added to the group.
     $this->assertTrue(CRM_Contact_BAO_GroupContact::isContactInGroup($contactId, $this->ids['Group']['id0']));
+    // and the group in add_to_group_id
+    $this->assertTrue(CRM_Contact_BAO_GroupContact::isContactInGroup($contactId, $this->ids['Group']['id3']));
 
     //get the parameters to compare.
     $params = $this->contactParams();
@@ -895,11 +897,12 @@ class CRM_Contact_BAO_ContactTest extends CiviUnitTestCase {
         '2' => '1',
         '5' => '1',
       ],
-      //Remove the contact from group1 and add to other 2 groups.
+      //Remove the contact from group1 and group3 and add to other 2 groups.
       'group' => [
         $this->ids['Group']["id0"] => '',
         $this->ids['Group']["id1"] => '1',
         $this->ids['Group']["id2"] => '1',
+        $this->ids['Group']["id3"] => '',
       ],
     ];
 
@@ -910,13 +913,13 @@ class CRM_Contact_BAO_ContactTest extends CiviUnitTestCase {
       NULL, NULL, NULL, TRUE
     );
 
-    //Verify if contact is correctly removed from group1
-    $groups = array_keys(CRM_Contact_BAO_GroupContact::getContactGroup($contactID, 'Removed'));
-    $expectedGroups = [$this->ids['Group']['id0']];
+    //Verify if contact is correctly removed from group1 and group4
+    $groups = array_column(CRM_Contact_BAO_GroupContact::getContactGroup($contactID, 'Removed'), 'group_id');
+    $expectedGroups = [$this->ids['Group']['id0'], $this->ids['Group']['id3']];
     $this->checkArrayEquals($expectedGroups, $groups);
 
-    //Verify if contact is correctly added to group1 and group2
-    $groups = array_keys(CRM_Contact_BAO_GroupContact::getContactGroup($contactID, 'Added'));
+    //Verify if contact is correctly added to group2 and group3
+    $groups = array_column(CRM_Contact_BAO_GroupContact::getContactGroup($contactID, 'Added'), 'group_id');
     $expectedGroups = [$this->ids['Group']['id1'], $this->ids['Group']['id2']];
     $this->checkArrayEquals($expectedGroups, $groups);
 

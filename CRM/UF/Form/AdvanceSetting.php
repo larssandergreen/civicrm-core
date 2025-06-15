@@ -46,8 +46,14 @@ class CRM_UF_Form_AdvanceSetting extends CRM_UF_Form_Group {
     //add notify field
     $form->addElement('text', 'notify', ts('Notify when profile form is submitted?'));
 
-    //group where new contacts are directed.
-    $form->addElement('select', 'add_contact_to_group', ts('Add contacts to a group?'), $group);
+    //group(s) where new contacts are directed.
+    $groups = CRM_Core_PseudoConstant::nestedGroup();
+    if (!empty($groups)) {
+      $form->addElement('select', 'add_contact_to_group', ts('Add contacts to a group?'), $groups, [
+        'multiple' => 'multiple',
+        'class' => 'crm-select2',
+      ]);
+    }
 
     // add CAPTCHA To this group ?
     $form->addElement('advcheckbox', 'add_captcha', ts('Include reCAPTCHA?'));

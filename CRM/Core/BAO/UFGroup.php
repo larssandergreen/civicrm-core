@@ -472,7 +472,7 @@ class CRM_Core_BAO_UFGroup extends CRM_Core_DAO_UFGroup implements \Civi\Core\Ho
       'website_type_id' => $field->website_type_id ?? NULL,
       'phone_type_id' => $field->phone_type_id ?? NULL,
       'group_id' => $group->id,
-      'add_to_group_id' => $group->add_to_group_id ?? NULL,
+      'add_to_group_id' => $group->add_to_group_id ? CRM_Core_DAO::unSerializeField($group->add_to_group_id, CRM_Core_DAO::SERIALIZE_SEPARATOR_BOOKEND) : [],
       'add_captcha' => $group->add_captcha ?? NULL,
       'field_type' => $field->field_type,
       'field_id' => $field->id,

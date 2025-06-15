@@ -512,6 +512,7 @@
         type: 'Select',
         options: YESNO
       },
+      // this does not appear to actually be used on the profile create/edit form anywhere - or is there a way to make it visible?
       'add_to_group_id': {
         title: ts('Add contacts to a group?'),
         help: ts('Select a group if you want contacts to be automatically added to that group when the profile is submitted.'),

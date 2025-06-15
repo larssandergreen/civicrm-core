@@ -25,11 +25,17 @@ class api_v3_UFGroupTest extends CiviUnitTestCase {
   protected $_ufFieldId;
   protected $_contactId;
   protected $_groupId;
+  protected $_groupId2;
   protected $params;
 
   protected function setUp(): void {
     parent::setUp();
     $this->_groupId = $this->groupCreate();
+    $groupId2Params = [
+      'name' => 'Test Group 2',
+      'title' => 'New Test Group 2 Created',
+    ];
+    $this->_groupId2 = $this->groupCreate($groupId2Params);
     $this->_contactId = $this->individualCreate();
     $this->createLoggedInUser();
     $ufGroup = $this->callAPISuccess('uf_group', 'create', [
@@ -45,7 +51,7 @@ class api_v3_UFGroupTest extends CiviUnitTestCase {
     ]);
     $this->params = [
       'add_captcha' => 1,
-      'add_contact_to_group' => $this->_groupId,
+      'add_contact_to_group' => [$this->_groupId, $this->_groupId2],
       'group' => $this->_groupId,
       'cancel_url' => 'http://example.org/cancel',
       'created_date' => '2009-06-27 00:00:00',
@@ -147,7 +153,7 @@ class api_v3_UFGroupTest extends CiviUnitTestCase {
     $params = [
       'id' => $this->_ufGroupId,
       'add_captcha' => 1,
-      'add_contact_to_group' => $this->_groupId,
+      'add_contact_to_group' => [$this->_groupId],
       'cancel_url' => 'http://example.org/cancel',
       'created_date' => '2009-06-27',
       'created_id' => $this->_contactId,

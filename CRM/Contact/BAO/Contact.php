@@ -1858,14 +1858,14 @@ ORDER BY civicrm_email.is_primary DESC";
    *   Array of fields from UFGroup.
    * @param int $contactID
    *   Id of the contact to be edited/added.
-   * @param int $addToGroupID
-   *   Specifies the default group to which contact is added.
+   * @param array|int $addToGroupID
+   *   Specifies the default group(s) to which the contact is added.
    * @param int $ufGroupId
    *   Uf group id (profile id).
    * @param string $ctype
    * @param bool $visibility
    *   Basically lets us know where this request is coming from.
-   *                                if via a profile from web, we restrict what groups are changed
+   *   If via a profile from web, we restrict what groups are changed.
    *
    * @return int
    *   contact id created/edited
@@ -1981,17 +1981,9 @@ ORDER BY civicrm_email.is_primary DESC";
       CRM_Core_BAO_EntityTag::create($tags, 'civicrm_contact', $contactID);
     }
 
-    // to add profile in default group
     // @todo merge this with code above which also calls addContactsToGroup
-    if (is_array($addToGroupID)) {
-      $contactIds = [$contactID];
-      foreach ($addToGroupID as $groupId) {
-        CRM_Contact_BAO_GroupContact::addContactsToGroup($contactIds, $groupId);
-      }
-    }
-    elseif ($addToGroupID) {
-      $contactIds = [$contactID];
-      CRM_Contact_BAO_GroupContact::addContactsToGroup($contactIds, $addToGroupID);
+    foreach ((array) $addToGroupID as $groupId) {
+      CRM_Contact_BAO_GroupContact::addContactsToGroup([$contactID], $groupId);
     }
 
     if ($editHook) {

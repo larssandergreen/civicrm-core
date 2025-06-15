@@ -154,18 +154,27 @@ return [
         'label' => ts('Post URL'),
       ],
     ],
+    // ./ext/biz.jmaconsulting.bugp/CRM/BUGP/BAO/UFGroup.php will need update to group var
+    // ./ext/biz.jmaconsulting.grantapplications/CRM/Grant/Form/GrantBase.php will need update same
+    // ./ext/biz.jmaconsulting.grantapplications/CRM/Grant/Form/Grant/Confirm.php also need update in if (!empty($value['add_to_group_id'])) {
+    // how to update DB with civibuild based on entitytype - just do this on test server
+
     'add_to_group_id' => [
-      'title' => ts('Add Contact To Group ID'),
-      'sql_type' => 'int unsigned',
+      'title' => ts('Add Contact To Group IDs'),
+      'sql_type' => 'varchar(255)',
       'input_type' => 'EntityRef',
-      'description' => ts('foreign key to civicrm_group_id'),
+      'description' => ts('List of groups to add contacts to'),
+      'serialize' => CRM_Core_DAO::SERIALIZE_SEPARATOR_BOOKEND,
       'input_attrs' => [
-        'label' => ts('Add Contact To Group'),
+        'label' => ts('Add Contact To Groups'),
+        'multiple' => TRUE,
       ],
-      'entity_reference' => [
-        'entity' => 'Group',
-        'key' => 'id',
-        'on_delete' => 'SET NULL',
+      'pseudoconstant' => [
+        'table' => 'civicrm_group',
+        'key_column' => 'id',
+        'name_column' => 'name',
+        'label_column' => 'title',
+        'prefetch' => 'disabled',
       ],
     ],
     'add_captcha' => [

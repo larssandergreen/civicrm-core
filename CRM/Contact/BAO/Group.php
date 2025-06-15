@@ -61,11 +61,21 @@ class CRM_Contact_BAO_Group extends CRM_Contact_DAO_Group implements HookInterfa
     $groupContact->group_id = $id;
     $groupContact->delete();
 
-    // make all the 'add_to_group_id' field of 'civicrm_uf_group table', pointing to this group, as null
-    $params = [1 => [$id, 'Integer']];
-    $query = "UPDATE civicrm_uf_group SET `add_to_group_id`= NULL WHERE `add_to_group_id` = %1";
-    CRM_Core_DAO::executeQuery($query, $params);
+    // remove from all 'add_to_group_id' fields of 'civicrm_uf_group'
+    $UFGroups = \Civi\Api4\UFGroup::get(FALSE)
+      ->addSelect('add_to_group_id')
+      ->addWhere('add_to_group_id', 'CONTAINS', [$id])
+      ->execute();
 
+    foreach ($UFGroups as $UFGroup) {
+      unset($UFGroup['add_to_group_id'][array_search($id, $UFGroup['add_to_group_id'])]);
+      \Civi\Api4\UFGroup::update(FALSE)
+        ->addValue('add_to_group_id', !(empty($UFGroup['add_to_group_id'])) ? $UFGroup['add_to_group_id'] : NULL)
+        ->addWhere('id', '=', $UFGroup['id'])
+        ->execute();
+    }
+
+    $params = [1 => [$id, 'Integer']];
     $query = "UPDATE civicrm_uf_group SET `limit_listings_group_id`= NULL WHERE `limit_listings_group_id` = %1";
     CRM_Core_DAO::executeQuery($query, $params);
 

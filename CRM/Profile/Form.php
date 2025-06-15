@@ -1203,11 +1203,11 @@ class CRM_Profile_Form extends CRM_Core_Form {
       }
     }
 
-    $addToGroupId = $this->_ufGroup['add_to_group_id'] ?? NULL;
-    if (!empty($addToGroupId)) {
+    $addToGroupId = $this->_ufGroup['add_to_group_id'] ?? [];
+    foreach ($addToGroupId as $key => $addToGroup) {
       //run same check whether group is a mailing list
       $groupTypes = CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Group',
-        $addToGroupId, 'group_type', 'id'
+        $addToGroup, 'group_type', 'id'
       );
       $groupType = explode(CRM_Core_DAO::VALUE_SEPARATOR,
         substr($groupTypes, 1, -1)
@@ -1232,15 +1232,14 @@ class CRM_Profile_Form extends CRM_Core_Form {
           }
         }
         //if group is already subscribed , ignore it
-        $groupExist = CRM_Utils_Array::key($addToGroupId, $contactGroup);
-        if (!isset($groupExist)) {
-          $mailingType[] = $addToGroupId;
-          $addToGroupId = NULL;
+        if (!(array_search($addToGroup, $contactGroup))) {
+          $mailingType[] = $addToGroup;
+          $unset($addToGroupId[$key]);
         }
       }
       else {
         // since we are directly adding contact to group lets unset it from mailing
-        if ($key = array_search($addToGroupId, $mailingType)) {
+        if ($key = array_search($addToGroup, $mailingType)) {
           unset($mailingType[$key]);
         }
       }

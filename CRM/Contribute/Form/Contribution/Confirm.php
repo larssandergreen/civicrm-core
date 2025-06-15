@@ -2022,7 +2022,9 @@ class CRM_Contribute_Form_Contribution_Confirm extends CRM_Contribute_Form_Contr
 
       // get the add to groups for uf fields
       if (!empty($value['add_to_group_id'])) {
-        $addToGroups[$value['add_to_group_id']] = $value['add_to_group_id'];
+        foreach ($value['add_to_group_id'] as $groupId) {
+          $addToGroups[$groupId] = $groupId;
+        }
       }
     }
 
