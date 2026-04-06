@@ -147,6 +147,10 @@
       {/if}
       </td>
     </tr>
+    <tr class="crm-price-field-form-block-show_remaining">
+      <td class="label">{$form.show_remaining.label} {help id="id-show_remaining" file="CRM/Price/Page/Field.hlp"}</td>
+      <td>{$form.show_remaining.html}</td>
+    </tr>
     <tr class="crm-price-field-form-block-weight">
       <td class="label">{$form.weight.label}</td>
       <td>{$form.weight.html|crmAddClass:two}
