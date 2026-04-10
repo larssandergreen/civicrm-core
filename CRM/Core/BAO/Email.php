@@ -88,6 +88,8 @@ WHERE  contact_id = {$event->params['contact_id']}
     }
     if (in_array($event->action, ['create', 'edit'])) {
       $contactId = (int) ($email->contact_id ?? CRM_Core_DAO::getFieldValue(__CLASS__, $email->id, 'contact_id'));
+      // CRM_Core_DAO::copyValues() sets is_primary to 'null' if not set
+      $email->is_primary = ($email->is_primary === 'null') ? NULL : $email->is_primary;
       $isPrimary = ($email->is_primary ?? CRM_Core_DAO::getFieldValue(__CLASS__, $email->id, 'is_primary'));
       if ($contactId && $isPrimary) {
         $address = $email->email ?? CRM_Core_DAO::getFieldValue(__CLASS__, $email->id, 'email');
