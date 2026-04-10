@@ -597,11 +597,6 @@ input.crm-form-checkbox) + label {
   animation-timing-function: var(--fa-animation-timing,linear);
 }
 
-/* Prevent multiselect from auto-closing when clicking on the input element – keep it in front of the select2-drop-mask */
-li.select2-search-field {
-  z-index: 9999;
-}
-
 /* Color dot for selecting e.g. tags */
 span.crm-select-item-color {
   display: inline-block;
@@ -688,18 +683,21 @@ span.crm-select-item-color {
 }
 .crm-container .select2-results .select2-result-label {
   font-size: var(--crm-input-font-size);
-  padding: var(--crm-l-small) var(--crm-l-medium);
+  padding-top: var(--crm-l-small);
+  padding-bottom: var(--crm-l-small);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .crm-container .select2-results > li .select2-result-label {
-  padding: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 .select2-results li.select2-result-with-children > .select2-result-label {
   font-weight: bold;
   background: var(--crm-layer2-bg-color);
-  padding: var(--crm-l-small);
+  padding-top: var(--crm-l-small);
+  padding-bottom: var(--crm-l-small);
 }
 .crm-container .crm-select2-row-description p {
   font-weight: normal;
