@@ -71,17 +71,20 @@ class AutocompleteFieldSubscriber extends AutoService implements EventSubscriber
           'where' => [['name', '=', $fieldName]],
         ])->single();
 
-        // Auto-add filters defined in schema
-        foreach ($fieldSpec['input_attrs']['filter'] ?? [] as $key => $value) {
-          $apiRequest->addFilter($key, $value);
-        }
+        // Schema filters limit which values can be chosen, not which saved values should be rendered.
+        if (!$apiRequest->getIds()) {
+          // Auto-add filters defined in schema
+          foreach ($fieldSpec['input_attrs']['filter'] ?? [] as $key => $value) {
+            $apiRequest->addFilter($key, $value);
+          }
 
-        // Auto-add raw where-clauses defined in schema (e.g. a custom field's "Advanced Filter"
-        // pasted in as a where-clause instead of the simpler flat field=value syntax).
-        // `input_attrs.where` is populated by EntityMetadataBase::getCustomFields() from the
-        // raw JSON - it's never literally present in what the user typed.
-        foreach ($fieldSpec['input_attrs']['where'] ?? [] as $clause) {
-          $apiRequest->addWhere($clause);
+          // Auto-add raw where-clauses defined in schema (e.g. a custom field's "Advanced Filter"
+          // pasted in as a where-clause instead of the simpler flat field=value syntax).
+          // `input_attrs.where` is populated by EntityMetadataBase::getCustomFields() from the
+          // raw JSON - it's never literally present in what the user typed.
+          foreach ($fieldSpec['input_attrs']['where'] ?? [] as $clause) {
+            $apiRequest->addWhere($clause);
+          }
         }
 
         // Use FK key from fieldSpec, e.g. custom Autocomplete field keys by 'value' not 'id'

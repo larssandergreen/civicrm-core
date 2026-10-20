@@ -629,6 +629,55 @@ class AutocompleteTest extends Api4TestBase implements HookInterface, Transactio
     $this->assertEquals($contacts[0]['id'], $result[0]['id']);
   }
 
+  public static function advancedFilterProvider(): array {
+    return [
+      'flat filter' => ['gender_id:name=Male', ['gender_id:name' => 'Male'], ['gender_id:name' => 'Female']],
+      'where clause' => ['[["is_deceased", "=", false]]', ['is_deceased' => FALSE], ['is_deceased' => TRUE]],
+    ];
+  }
+
+  /**
+   * Schema filters limit which values can be chosen, but a saved value that
+   * no longer matches must still be rendered when looked up by id.
+   *
+   * @dataProvider advancedFilterProvider
+   */
+  public function testSchemaFiltersNotAppliedWhenLookingUpByIds(string $filter, array $matchingValues, array $nonMatchingValues): void {
+    $lastName = uniqid(__FUNCTION__);
+    $contacts = $this->saveTestRecords('Contact', [
+      'records' => [
+        ['first_name' => 'Include', 'last_name' => $lastName] + $matchingValues,
+        ['first_name' => 'Exclude', 'last_name' => $lastName] + $nonMatchingValues,
+      ],
+    ]);
+
+    $customGroup = $this->createTestRecord('CustomGroup', [
+      'extends' => 'Activity',
+      'title' => __FUNCTION__,
+    ]);
+    $customField = $this->createTestRecord('CustomField', [
+      'custom_group_id' => $customGroup['id'],
+      'label' => 'contact_ref',
+      'data_type' => 'EntityReference',
+      'html_type' => 'Autocomplete-Select',
+      'fk_entity' => 'Contact',
+      'filter' => $filter,
+    ]);
+    $fieldName = 'Activity.' . $customGroup['name'] . '.' . $customField['name'];
+
+    $searchResult = Contact::autocomplete()
+      ->setInput($lastName)
+      ->setFieldName($fieldName)
+      ->execute();
+    $this->assertEquals([$contacts[0]['id']], (array) $searchResult->column('id'));
+
+    $savedValueResult = Contact::autocomplete()
+      ->setIds([$contacts[1]['id']])
+      ->setFieldName($fieldName)
+      ->execute();
+    $this->assertEquals([$contacts[1]['id']], (array) $savedValueResult->column('id'));
+  }
+
   /**
    * Tests that event autocomplete sorts by start_date DESC and shows start_date instead of description.
    */
