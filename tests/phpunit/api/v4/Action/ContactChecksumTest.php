@@ -70,4 +70,87 @@ class ContactChecksumTest extends Api4TestBase implements TransactionalInterface
     $this->assertFalse($result2['valid']);
   }
 
+  public function testScopedChecksum(): void {
+    $cid = $this->createTestRecord('Contact', ['first_name' => 'Scoped'])['id'];
+    $scopedCs = Contact::getChecksum(FALSE)
+      ->setContactId($cid)
+      ->setScope('recur')
+      ->execute()
+      ->first()['checksum'];
+
+    $validForScope = Contact::validateChecksum(FALSE)
+      ->setContactId($cid)
+      ->setChecksum($scopedCs)
+      ->setScopes(['recur'])
+      ->execute()
+      ->first()['valid'];
+    $this->assertTrue($validForScope);
+
+    $validForListedScope = Contact::validateChecksum(FALSE)
+      ->setContactId($cid)
+      ->setChecksum($scopedCs)
+      ->setScopes(['profile', 'recur'])
+      ->execute()
+      ->first()['valid'];
+    $this->assertTrue($validForListedScope);
+
+    $validForOtherScopes = Contact::validateChecksum(FALSE)
+      ->setContactId($cid)
+      ->setChecksum($scopedCs)
+      ->setScopes(['profile', 'event'])
+      ->setAcceptUnscoped(TRUE)
+      ->execute()
+      ->first()['valid'];
+    $this->assertFalse($validForOtherScopes);
+
+    $validWithoutScope = Contact::validateChecksum(FALSE)
+      ->setContactId($cid)
+      ->setChecksum($scopedCs)
+      ->execute()
+      ->first()['valid'];
+    $this->assertFalse($validWithoutScope);
+  }
+
+  public function testValidateChecksumAcceptUnscoped(): void {
+    $cid = $this->createTestRecord('Contact', ['first_name' => 'Unscoped'])['id'];
+    $unscopedCs = Contact::getChecksum(FALSE)
+      ->setContactId($cid)
+      ->execute()
+      ->first()['checksum'];
+
+    $validWhenAccepted = Contact::validateChecksum(FALSE)
+      ->setContactId($cid)
+      ->setChecksum($unscopedCs)
+      ->setScopes(['recur'])
+      ->setAcceptUnscoped(TRUE)
+      ->execute()
+      ->first()['valid'];
+    $this->assertTrue($validWhenAccepted);
+
+    $validWhenRejected = Contact::validateChecksum(FALSE)
+      ->setContactId($cid)
+      ->setChecksum($unscopedCs)
+      ->setScopes(['recur'])
+      ->setAcceptUnscoped(FALSE)
+      ->execute()
+      ->first()['valid'];
+    $this->assertFalse($validWhenRejected);
+  }
+
+  public function testValidateChecksumWithNullScopes(): void {
+    $cid = $this->createTestRecord('Contact', ['first_name' => 'Unscoped'])['id'];
+    $unscopedCs = Contact::getChecksum(FALSE)
+      ->setContactId($cid)
+      ->execute()
+      ->first()['checksum'];
+
+    $valid = civicrm_api4('Contact', 'validateChecksum', [
+      'contactId' => $cid,
+      'checksum' => $unscopedCs,
+      'scopes' => NULL,
+      'checkPermissions' => FALSE,
+    ])->first()['valid'];
+    $this->assertTrue($valid);
+  }
+
 }

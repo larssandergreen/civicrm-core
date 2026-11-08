@@ -3293,13 +3293,17 @@ abstract class CRM_Utils_Hook {
    * @param string $checksum
    * @param bool $invalid
    *   Leave this at FALSE to allow the core code to perform validation. Set to TRUE to invalidate
+   * @param string[] $scopes
+   *   Scopes the caller is validating for, empty when only unscoped checksums
+   *   are valid. The hook runs before validation, so these are just the scopes
+   *   requested.
    */
-  public static function invalidateChecksum($contactID, $checksum, &$invalid) {
+  public static function invalidateChecksum($contactID, $checksum, &$invalid, array $scopes = []) {
     $null = NULL;
     return self::singleton()->invoke(
-      ['contactID', 'checksum', 'invalid'],
+      ['contactID', 'checksum', 'invalid', 'scopes'],
       $contactID, $checksum, $invalid,
-      $null, $null, $null,
+      $scopes, $null, $null,
       'civicrm_invalidateChecksum'
     );
   }

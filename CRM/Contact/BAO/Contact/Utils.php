@@ -131,12 +131,18 @@ WHERE  id IN ( $idString )
    *   Contact hash, if sent, prevents a query in inner loop.
    * @param string $entityType
    * @param int|null $hashSize
+   * @param string|null $scope
+   *   Restrict the validity of the checksum to this scope.
    *
    * @return string
    *   (Underscore separated: $cs, $ts, $live )
    * @throws \CRM_Core_Exception
    */
-  public static function generateChecksum($entityId, $ts = NULL, $live = NULL, $hash = NULL, $entityType = 'contact', $hashSize = NULL) {
+  public static function generateChecksum($entityId, $ts = NULL, $live = NULL, $hash = NULL, $entityType = 'contact', $hashSize = NULL, ?string $scope = NULL) {
+    if ($scope !== NULL) {
+      self::assertValidScope($scope);
+    }
+
     // return a warning message if we dont get a entityId
     // this typically happens when we do a message preview
     // or an anon mailing view - CRM-8298
@@ -191,7 +197,11 @@ WHERE  id IN ( $idString )
       $live = 24 * $days;
     }
 
-    $cs = md5("{$hash}_{$entityId}_{$ts}_{$live}");
+    $hashInput = "{$hash}_{$entityId}_{$ts}_{$live}";
+    if ($scope !== NULL) {
+      $hashInput = "{$scope}_{$hashInput}";
+    }
+    $cs = md5($hashInput);
     return "{$cs}_{$ts}_{$live}";
   }
 
@@ -201,41 +211,65 @@ WHERE  id IN ( $idString )
    * @param int $contactID
    * @param string $inputCheck
    *   Checksum to match against.
+   * @param string[] $scopes
+   *   The checksum should be valid for one of these scopes. Empty means only unscoped.
+   * @param bool|null $acceptUnscoped
+   *   Whether an unscoped checksum is also valid when $scopes is not empty.
+   *   NULL uses the checksum_accept_unscoped setting.
    *
    * @return bool
    *   true if valid, else false
    *
    * @throws \CRM_Core_Exception
    */
-  public static function validChecksum($contactID, $inputCheck) {
+  public static function validChecksum($contactID, $inputCheck, array $scopes = [], ?bool $acceptUnscoped = NULL) {
+    foreach ($scopes as $scope) {
+      self::assertValidScope($scope);
+    }
+
     // Allow a hook to invalidate checksums
     $invalid = FALSE;
-    CRM_Utils_Hook::invalidateChecksum($contactID, $inputCheck, $invalid);
+    CRM_Utils_Hook::invalidateChecksum($contactID, $inputCheck, $invalid, $scopes);
     if ($invalid) {
+      return FALSE;
+    }
+
+    // If the contactID doesn't exist or has no hash, return early instead of checking each scope.
+    $hash = $contactID ? CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Contact', $contactID, 'hash') : NULL;
+    if (!$hash) {
       return FALSE;
     }
 
     $input = CRM_Utils_System::explode('_', $inputCheck, 3);
 
-    $inputCS = $input[0] ?? NULL;
     $inputTS = $input[1] ?? NULL;
     $inputLF = $input[2] ?? NULL;
 
-    $check = self::generateChecksum($contactID, $inputTS, $inputLF);
-    // Joomla_11 - If $inputcheck is null without explicitly casting to a string
-    // you get an error.
-    if (!hash_equals($check, (string) $inputCheck)) {
-      return FALSE;
+    $scopesToCheck = $scopes;
+    if (!$scopes || ($acceptUnscoped ?? Civi::settings()->get('checksum_accept_unscoped'))) {
+      $scopesToCheck[] = NULL;
     }
-
-    // no life limit for checksum
-    if ($inputLF == 'inf') {
-      return TRUE;
+    foreach ($scopesToCheck as $scopeToCheck) {
+      $check = self::generateChecksum($contactID, $inputTS, $inputLF, hash: $hash, scope: $scopeToCheck);
+      // Joomla_11 - If $inputcheck is null without explicitly casting to a string
+      // you get an error.
+      if (hash_equals($check, (string) $inputCheck)) {
+        // 'inf' checksums never expire.
+        return $inputLF == 'inf' || $inputTS + ($inputLF * 60 * 60) >= time();
+      }
     }
+    return FALSE;
+  }
 
-    // checksum matches so now check timestamp
-    $now = time();
-    return ($inputTS + ($inputLF * 60 * 60) >= $now);
+  /**
+   * @param mixed $scope
+   *
+   * @throws \CRM_Core_Exception
+   */
+  private static function assertValidScope($scope): void {
+    if (!is_string($scope) || $scope === '') {
+      throw new CRM_Core_Exception('A checksum scope must be a non-empty string.');
+    }
   }
 
   /**

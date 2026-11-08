@@ -21,6 +21,10 @@ use Civi\Api4\Generic\Result;
  * @method int getContactId() Get contact ID param
  * @method $this setChecksum(string $checksum) Set checksum param (required)
  * @method string getChecksum() Get checksum param
+ * @method $this setScopes(array $scopes) Set scopes param
+ * @method array getScopes() Get scopes param
+ * @method $this setAcceptUnscoped(?bool $acceptUnscoped) Set acceptUnscoped param
+ * @method bool getAcceptUnscoped() Get acceptUnscoped param
  */
 class ValidateChecksum extends \Civi\Api4\Generic\AbstractAction {
 
@@ -41,11 +45,25 @@ class ValidateChecksum extends \Civi\Api4\Generic\AbstractAction {
   protected $checksum;
 
   /**
+   * The checksum should be valid for one of these scopes. If empty, only unscoped checksums are valid.
+   *
+   * @var array
+   */
+  protected $scopes = [];
+
+  /**
+   * Whether an unscoped checksum is also valid when scopes are set. Defaults to the checksum_accept_unscoped setting.
+   *
+   * @var bool
+   */
+  protected $acceptUnscoped = NULL;
+
+  /**
    * @param \Civi\Api4\Generic\Result $result
    */
   public function _run(Result $result) {
     $result[] = [
-      'valid' => \CRM_Contact_BAO_Contact_Utils::validChecksum($this->contactId, $this->checksum),
+      'valid' => \CRM_Contact_BAO_Contact_Utils::validChecksum($this->contactId, $this->checksum, $this->scopes ?? [], $this->acceptUnscoped),
     ];
   }
 

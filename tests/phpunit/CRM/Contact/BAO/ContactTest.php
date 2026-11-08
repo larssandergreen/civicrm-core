@@ -1809,4 +1809,114 @@ class CRM_Contact_BAO_ContactTest extends CiviUnitTestCase {
     $invalid = TRUE;
   }
 
+  public function testExpiredScopedChecksumIsInvalid(): void {
+    $contactID = $this->createTestEntity('Contact', ['contact_type' => 'Individual', 'first_name' => 'Expiry'])['id'];
+    $currentChecksum = CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID, live: 1, scope: 'recur');
+    $expiredChecksum = CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID, ts: strtotime('-2 hours'), live: 1, scope: 'recur');
+
+    $this->assertTrue(CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, $currentChecksum, ['recur']));
+    $this->assertFalse(CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, $expiredChecksum, ['recur']));
+  }
+
+  /**
+   * Scopes must be non-empty strings. NULL is how validChecksum() represents
+   * "unscoped" internally, so a NULL scope would let this unscoped checksum
+   * through despite acceptUnscoped: FALSE.
+   */
+  public function testNullChecksumScopeIsRejected(): void {
+    $contactID = $this->createTestEntity('Contact', ['contact_type' => 'Individual', 'first_name' => 'Unscoped'])['id'];
+    $checksum = CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID);
+
+    $this->expectException(CRM_Core_Exception::class);
+    CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, $checksum, [NULL], acceptUnscoped: FALSE);
+  }
+
+  public function testEmptyChecksumScopeCannotBeIssued(): void {
+    $contactID = $this->createTestEntity('Contact', ['contact_type' => 'Individual', 'first_name' => 'Scoped'])['id'];
+
+    $this->expectException(CRM_Core_Exception::class);
+    CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID, scope: '');
+  }
+
+  /**
+   * Checksums issued before scopes existed must keep validating.
+   */
+  public function testUnscopedChecksumMatchesLegacyHash(): void {
+    $contactID = $this->createTestEntity('Contact', ['contact_type' => 'Individual', 'first_name' => 'Unscoped'])['id'];
+    $checksum = CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID, 1700000000, 168);
+    $hash = CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Contact', $contactID, 'hash');
+    $this->assertSame(md5("{$hash}_{$contactID}_1700000000_168") . '_1700000000_168', $checksum);
+  }
+
+  public function testScopedChecksumIsOnlyValidForListedScopes(): void {
+    $contactID = $this->createTestEntity('Contact', ['contact_type' => 'Individual', 'first_name' => 'Scoped'])['id'];
+    $checksum = CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID, scope: 'recur');
+
+    $this->assertTrue(CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, $checksum, ['profile', 'recur']));
+    $this->assertFalse(CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, $checksum, ['profile', 'event'], acceptUnscoped: TRUE));
+    $this->assertFalse(CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, $checksum));
+  }
+
+  /**
+   * Guards the position of the scope in the hash input of generateChecksum().
+   *
+   * If the scope followed $live, appending "_recur" to this checksum would make
+   * validation read $live as "168_recur" and recompute the scoped hash, so a
+   * recur checksum would pass on every page that accepts unscoped checksums.
+   */
+  public function testScopedChecksumCannotBePassedOffAsUnscoped(): void {
+    $contactID = $this->createTestEntity('Contact', ['contact_type' => 'Individual', 'first_name' => 'Scoped'])['id'];
+    $checksum = CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID, live: 168, scope: 'recur');
+
+    $this->assertFalse(CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, "{$checksum}_recur"));
+  }
+
+  /**
+   * Hooks and extensions parse checksums as {md5}_{ts}_{live}, e.g. to reject
+   * those ending in "_inf". If scoped checksums had another format, such checks
+   * would silently stop applying to them.
+   */
+  public function testScopedChecksumKeepsFormat(): void {
+    $contactID = $this->createTestEntity('Contact', ['contact_type' => 'Individual', 'first_name' => 'Format'])['id'];
+    $checksum = CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID, live: 'inf', scope: 'recur');
+    $this->assertMatchesRegularExpression('/^[0-9a-f]{32}_\d+_inf$/', $checksum);
+  }
+
+  /**
+   * @dataProvider acceptUnscopedCases
+   */
+  public function testUnscopedChecksumForScopedValidation(?bool $acceptUnscoped, ?bool $setting, bool $expectedValid): void {
+    $contactID = $this->createTestEntity('Contact', ['contact_type' => 'Individual', 'first_name' => 'Unscoped'])['id'];
+    $checksum = CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID);
+    if ($setting !== NULL) {
+      Civi::settings()->set('checksum_accept_unscoped', $setting);
+    }
+
+    $this->assertSame($expectedValid, CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, $checksum, ['recur'], $acceptUnscoped));
+    $this->assertTrue(CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, $checksum));
+  }
+
+  public static function acceptUnscopedCases(): array {
+    return [
+      'default setting (false)' => [NULL, NULL, FALSE],
+      'setting on' => [NULL, TRUE, TRUE],
+      'explicitly accepted, setting off' => [TRUE, FALSE, TRUE],
+      'explicitly rejected, setting on' => [FALSE, TRUE, FALSE],
+    ];
+  }
+
+  public function testInvalidateChecksumHookCanRejectAScope(): void {
+    $contactID = $this->createTestEntity('Contact', ['contact_type' => 'Individual', 'first_name' => 'Scoped'])['id'];
+    $this->hookClass->setHook('civicrm_invalidateChecksum', function (int $contactID, string $inputCheck, bool &$invalid, array $scopes): void {
+      if (in_array('recur', $scopes, TRUE)) {
+        $invalid = TRUE;
+      }
+    });
+
+    $scopedChecksum = CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID, scope: 'recur');
+    $this->assertFalse(CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, $scopedChecksum, ['recur']));
+    $unscopedChecksum = CRM_Contact_BAO_Contact_Utils::generateChecksum($contactID);
+    $this->assertTrue(CRM_Contact_BAO_Contact_Utils::validChecksum($contactID, $unscopedChecksum));
+  }
+
 }

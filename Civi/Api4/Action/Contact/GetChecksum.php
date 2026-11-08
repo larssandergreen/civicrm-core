@@ -21,6 +21,8 @@ use Civi\Api4\Generic\Result;
  * @method int getContactId() Get contact ID param
  * @method $this setTtl(int $ttl) Set TTL param
  * @method int getTtl() Get TTL param
+ * @method $this setScope(string $scope) Set scope param
+ * @method string getScope() Get scope param
  */
 class GetChecksum extends \Civi\Api4\Generic\AbstractAction {
 
@@ -42,13 +44,20 @@ class GetChecksum extends \Civi\Api4\Generic\AbstractAction {
   protected $ttl = NULL;
 
   /**
+   * Restrict the validity of the checksum to this scope.
+   *
+   * @var string
+   */
+  protected $scope = NULL;
+
+  /**
    * @param \Civi\Api4\Generic\Result $result
    */
   public function _run(Result $result) {
     $ttl = ($this->ttl === 0 || $this->ttl === '0') ? 'inf' : $this->ttl;
     $result[] = [
       'id' => $this->contactId,
-      'checksum' => \CRM_Contact_BAO_Contact_Utils::generateChecksum($this->contactId, NULL, $ttl),
+      'checksum' => \CRM_Contact_BAO_Contact_Utils::generateChecksum($this->contactId, live: $ttl, scope: $this->scope),
     ];
   }
 

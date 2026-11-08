@@ -29,6 +29,21 @@ class CRM_Upgrade_Incremental_php_SixTwentyTwo extends CRM_Upgrade_Incremental_B
    */
   public function upgrade_6_22_alpha1($rev): void {
     $this->addTask(ts('Upgrade DB to %1: SQL', [1 => $rev]), 'runSql', $rev);
+    $this->addTask('Keep accepting unscoped checksums on existing sites', 'acceptUnscopedChecksums');
+  }
+
+  /**
+   * New installs reject unscoped checksums where a scope is required.
+   * Existing sites keep accepting them, so links already sent keep working.
+   *
+   * @return bool
+   */
+  public static function acceptUnscopedChecksums(): bool {
+    $domainIDs = \Civi\Api4\Domain::get(FALSE)->addSelect('id')->execute()->column('id');
+    foreach ($domainIDs as $domainID) {
+      Civi::settings($domainID)->set('checksum_accept_unscoped', TRUE);
+    }
+    return TRUE;
   }
 
 }
