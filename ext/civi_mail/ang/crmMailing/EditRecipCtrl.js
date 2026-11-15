@@ -62,8 +62,8 @@
       return built;
     }
 
-    // We monitor four fields -- use debounce so that changes across the
-    // four fields can settle-down before AJAX.
+    // We monitor seven fields -- use debounce so that changes across the
+    // fields can settle-down before AJAX.
     var refreshRecipients = CRM.utils.debounce(function() {
       $scope.$apply(function() {
         if (!$scope.mailing) {
@@ -75,9 +75,10 @@
         });
       });
     }, RECIPIENTS_DEBOUNCE_MS);
-    $scope.$watchCollection("mailing.dedupe_email", refreshRecipients);
-    $scope.$watchCollection("mailing.location_type_id", refreshRecipients);
-    $scope.$watchCollection("mailing.email_selection_method", refreshRecipients);
+    // Avoid extra calls when null changes to ''
+    $scope.$watchCollection("mailing.dedupe_email || null", refreshRecipients);
+    $scope.$watchCollection("mailing.location_type_id || null", refreshRecipients);
+    $scope.$watchCollection("mailing.email_selection_method || null", refreshRecipients);
     $scope.$watchCollection("mailing.recipients.groups.include", refreshRecipients);
     $scope.$watchCollection("mailing.recipients.groups.exclude", refreshRecipients);
     $scope.$watchCollection("mailing.recipients.mailings.include", refreshRecipients);
@@ -110,11 +111,11 @@
     };
 
     $scope.rebuildRecipients = function rebuildRecipients() {
-      // Snapshot what the list is about to be built from, so later edits can be spotted
-      crmMailingCache.put(builtParamsKey(), angular.copy(recipientParams()));
+      // Snapshot what the list is built from when the request is built, so later edits can be spotted
+      const snapshotBuiltParams = () => crmMailingCache.put(builtParamsKey(), angular.copy(recipientParams()));
       // setting null will put 'Estimating..' text on refresh button
       $scope.recipients = null;
-      return crmMailingMgr.previewRecipientCount($scope.mailing, crmMailingCache, true).then(function(recipients) {
+      return crmMailingMgr.previewRecipientCount($scope.mailing, crmMailingCache, true, snapshotBuiltParams).then(function(recipients) {
         $scope.outdated = false;
         $scope.recipients = recipients;
       });

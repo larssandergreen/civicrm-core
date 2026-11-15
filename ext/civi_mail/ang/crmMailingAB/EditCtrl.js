@@ -133,7 +133,9 @@
     myAutosave = new CrmAutosaveCtrl({
       save: $scope.save,
       saveIf: function() {
-        return abtest.ab.status == 'Draft' && $scope.sync();
+        // Don't queue an autosave behind a save, submit or delete in progress;
+        // that would trigger a leave page warning.
+        return abtest.ab.status == 'Draft' && !block.check() && $scope.sync();
       },
       model: function() {
         return abtest.getAutosaveSignature();

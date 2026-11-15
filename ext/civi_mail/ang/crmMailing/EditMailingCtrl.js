@@ -118,7 +118,9 @@
     myAutosave = new CrmAutosaveCtrl({
       save: $scope.save,
       saveIf: function() {
-        return true;
+        // Don't queue an autosave behind a save, submit or delete in progress;
+        // that would trigger a leave page warning.
+        return !block.check();
       },
       model: function() {
         //modified date is unset so that it gets ignored in comparison

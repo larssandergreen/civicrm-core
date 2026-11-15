@@ -91,8 +91,35 @@
   });
 
   // The crmMailingMgr service provides business logic for loading, saving, previewing, etc
-  angular.module('crmMailing').factory('crmMailingMgr', function ($q, crmApi, crmApi4, crmFromAddresses, crmQueue) {
+  angular.module('crmMailing').factory('crmMailingMgr', function ($q, crmApi, crmApi4, crmFromAddresses, crmQueue, $window) {
     const qApi = crmQueue(crmApi4);
+    // Writes (except delete or submit) send modified date and the server rejects if it has
+    // a stale date, so we can only make one call at a time to avoid triggering a "not saved" alert.
+    // lastWrites holds the promise of each mailing's most recent write; queueWrite() chains the new
+    // write function onto it with then(), and records the new write's promise as the end of the queue.
+    // The chain still proceeds after a failure.
+    const lastWrites = new WeakMap();
+    let unfinishedWrites = 0;
+    $window.addEventListener('beforeunload', (e) => {
+      if (unfinishedWrites > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+    const queueWrite = (mailing, write, options = {}) => {
+      // With no earlier write, start right away from an already resolved promise.
+      const previous = lastWrites.get(mailing) || $q.resolve();
+      const next = previous.catch(() => {}).then(() => write());
+      lastWrites.set(mailing, next);
+      if (options.warnOnLeave !== false) {
+        unfinishedWrites++;
+        const finished = () => {
+          unfinishedWrites--;
+        };
+        next.then(finished, finished);
+      }
+      return next;
+    };
     var pickDefaultMailComponent = function pickDefaultMailComponent(type) {
       var mcs = CRM.crmMailing.headerfooterList.filter((mc) => mc.component_type === type && mc.is_default === "1");
       return (mcs.length >= 1) ? mcs[0].id : null;
@@ -174,14 +201,12 @@
       // @param mailing Object
       // @return Promise
       'delete': function (mailing) {
-        if (mailing.id) {
-          return qApi('Mailing', 'delete', {where: [['id', '=', mailing.id]]});
-        }
-        else {
-          var d = $q.defer();
-          d.resolve();
-          return d.promise;
-        }
+        return queueWrite(mailing, () => {
+          if (mailing.id) {
+            return crmApi4('Mailing', 'delete', {where: [['id', '=', mailing.id]]});
+          }
+          return $q.resolve();
+        });
       },
 
       // Search the body, header, and footer for required tokens.
@@ -281,7 +306,6 @@
           var params = angular.extend({}, mailing);
           delete params.id;
           return backend('Mailing', 'preview', params).then(function(result) {
-            // changes rolled back, so we don't care about updating mailing
             return result.values;
           });
         }
@@ -291,59 +315,67 @@
       // @param int previewLimit
       // @return Promise for a list of recipients (mailing_id, contact_id, api.contact.getvalue, api.email.getvalue)
       previewRecipients: function previewRecipients(mailing, previewLimit) {
-        // To get list of recipients, we tentatively save the mailing and
-        // get the resulting recipients -- then rollback any changes.
-        var params = angular.extend({}, mailing.recipients, {
-          id: mailing.id,
-          'api.MailingRecipients.get': {
-            mailing_id: '$value.id',
-            options: {limit: previewLimit},
-            'api.contact.getvalue': {'return': 'display_name'},
-            'api.email.getvalue': {'return': 'email'}
-          }
-        });
-        delete params.scheduled_date;
-        delete params.recipients; // the content was merged in
-        return crmQueue(crmApi)('Mailing', 'create', params).then(function (recipResult) {
-          // changes rolled back, so we don't care about updating mailing
-          mailing.modified_date = recipResult.values[recipResult.id].modified_date;
-          return recipResult.values[recipResult.id]['api.MailingRecipients.get'].values;
-        });
+        return queueWrite(mailing, () => {
+          // To get the list of recipients, we save the mailing's recipient settings and fetch the
+          // resulting recipients.
+          var params = angular.extend({}, mailing.recipients, {
+            id: mailing.id,
+            modified_date: mailing.modified_date,
+            'api.MailingRecipients.get': {
+              mailing_id: '$value.id',
+              options: {limit: previewLimit},
+              'api.contact.getvalue': {'return': 'display_name'},
+              'api.email.getvalue': {'return': 'email'}
+            }
+          });
+          delete params.scheduled_date;
+          delete params.recipients; // the content was merged in
+          return crmApi('Mailing', 'create', params).then(function (recipResult) {
+            // Keep the mailing's modified_date in step with the server.
+            mailing.modified_date = recipResult.values[recipResult.id].modified_date;
+            return recipResult.values[recipResult.id]['api.MailingRecipients.get'].values;
+          });
+        }, {warnOnLeave: false});
       },
 
-      previewRecipientCount: function previewRecipientCount(mailing, crmMailingCache, rebuild) {
+      // @param onBuild Function|undefined Called just before the request is built, just in case recipients changed.
+      previewRecipientCount: function previewRecipientCount(mailing, crmMailingCache, rebuild, onBuild) {
         var cachekey = 'mailing-' + mailing.id + '-recipient-count';
         var recipientCount = crmMailingCache.get(cachekey);
         if (rebuild || !recipientCount) {
-          // To get list of recipients, we tentatively save the mailing and
-          // get the resulting recipients -- then rollback any changes.
-          var params = angular.extend({}, mailing, mailing.recipients, {
-            id: mailing.id,
-            'api.MailingRecipients.getcount': {
-              mailing_id: '$value.id'
+          recipientCount = queueWrite(mailing, () => {
+            if (onBuild) {
+              onBuild();
             }
-          });
-          // if this service is executed on rebuild then also fetch the recipients list
-          if (rebuild) {
-            params = angular.extend(params, {
-              'api.MailingRecipients.get': {
-                mailing_id: '$value.id',
-                options: {limit: 50},
-                'api.contact.getvalue': {'return': 'display_name'},
-                'api.email.getvalue': {'return': 'email'}
+            // To count the recipients, we save the mailing and count the resulting recipients.
+            var params = angular.extend({}, mailing, mailing.recipients, {
+              id: mailing.id,
+              'api.MailingRecipients.getcount': {
+                mailing_id: '$value.id'
               }
             });
-          }
-          delete params.scheduled_date;
-          delete params.recipients; // the content was merged in
-          recipientCount = crmQueue(crmApi)('Mailing', 'create', params).then(function (recipResult) {
-            // changes rolled back, so we don't care about updating mailing
-            mailing.modified_date = recipResult.values[recipResult.id].modified_date;
+            // if this service is executed on rebuild then also fetch the recipients list
             if (rebuild) {
-              crmMailingCache.put('mailing-' + mailing.id + '-recipient-list', recipResult.values[recipResult.id]['api.MailingRecipients.get'].values);
+              params = angular.extend(params, {
+                'api.MailingRecipients.get': {
+                  mailing_id: '$value.id',
+                  options: {limit: 50},
+                  'api.contact.getvalue': {'return': 'display_name'},
+                  'api.email.getvalue': {'return': 'email'}
+                }
+              });
             }
-            return recipResult.values[recipResult.id]['api.MailingRecipients.getcount'];
-          });
+            delete params.scheduled_date;
+            delete params.recipients; // the content was merged in
+            return crmApi('Mailing', 'create', params).then(function (recipResult) {
+              // Keep the mailing's modified_date in step with the server.
+              mailing.modified_date = recipResult.values[recipResult.id].modified_date;
+              if (rebuild) {
+                crmMailingCache.put('mailing-' + mailing.id + '-recipient-list', recipResult.values[recipResult.id]['api.MailingRecipients.get'].values);
+              }
+              return recipResult.values[recipResult.id]['api.MailingRecipients.getcount'];
+            });
+          }, {warnOnLeave: false});
           crmMailingCache.put(cachekey, recipientCount);
         }
 
@@ -354,31 +386,33 @@
       // @param mailing Object
       // @return Promise
       save: function(mailing) {
-        var params = angular.extend({}, mailing, mailing.recipients);
+        return queueWrite(mailing, () => {
+          var params = angular.extend({}, mailing, mailing.recipients);
 
-        // Angular ngModel sometimes treats blank fields as undefined.
-        angular.forEach(mailing, function(value, key) {
-          if (value === undefined || value === null) {
-            mailing[key] = '';
-          }
-        });
+          // Angular ngModel sometimes treats blank fields as undefined.
+          angular.forEach(mailing, function(value, key) {
+            if (value === undefined || value === null) {
+              mailing[key] = '';
+            }
+          });
 
-        // WORKAROUND: Mailing.create (aka CRM_Mailing_BAO_Mailing::create()) interprets scheduled_date
-        // as an *intent* to schedule and creates tertiary records. Saving a draft with a scheduled_date
-        // is therefore not allowed. Remove this after fixing Mailing.create's contract.
-        delete params.scheduled_date;
+          // WORKAROUND: Mailing.create (aka CRM_Mailing_BAO_Mailing::create()) interprets scheduled_date
+          // as an *intent* to schedule and creates tertiary records. Saving a draft with a scheduled_date
+          // is therefore not allowed. Remove this after fixing Mailing.create's contract.
+          delete params.scheduled_date;
 
-        delete params.jobs;
+          delete params.jobs;
 
-        delete params.recipients; // the content was merged in
-        params._skip_evil_bao_auto_recipients_ = 1; // skip recipient rebuild on simple save
-        return qApi('Mailing', 'save', {records: [params]}, 0).then((result) => {
-          if (result.id && !mailing.id) {
-            mailing.id = result.id;
-          }  // no rollback, so update mailing.id
-          // Perhaps we should reload mailing based on result?
-          mailing.modified_date = result.modified_date;
-          return mailing;
+          delete params.recipients; // the content was merged in
+          params._skip_evil_bao_auto_recipients_ = 1; // skip recipient rebuild on simple save
+          return crmApi4('Mailing', 'save', {records: [params]}, 0).then((result) => {
+            if (result.id && !mailing.id) {
+              mailing.id = result.id;
+            }  // no rollback, so update mailing.id
+            // Perhaps we should reload mailing based on result?
+            mailing.modified_date = result.modified_date;
+            return mailing;
+          });
         });
       },
 
@@ -387,19 +421,21 @@
       // @return Promise
       submit: function (mailing) {
         var crmMailingMgr = this;
-        var params = {
-          id: mailing.id,
-          approval_date: 'now',
-          scheduled_date: mailing.scheduled_date ? mailing.scheduled_date : 'now'
-        };
-        return crmQueue(crmApi)('Mailing', 'submit', params)
-          .then(function (result) {
-            angular.extend(mailing, result.values[result.id]); // Perhaps we should reload mailing based on result?
-            return crmMailingMgr._loadJobs(mailing);
-          })
-          .then(function () {
-            return mailing;
-          });
+        return queueWrite(mailing, () => {
+          var params = {
+            id: mailing.id,
+            approval_date: 'now',
+            scheduled_date: mailing.scheduled_date ? mailing.scheduled_date : 'now'
+          };
+          return crmApi('Mailing', 'submit', params)
+            .then(function (result) {
+              angular.extend(mailing, result.values[result.id]); // Perhaps we should reload mailing based on result?
+              return crmMailingMgr._loadJobs(mailing);
+            })
+            .then(function () {
+              return mailing;
+            });
+        });
       },
 
       // Immediately send a test message
@@ -407,32 +443,34 @@
       // @param to Object with either key "email" (string) or "gid" (int)
       // @return Promise for a list of delivery reports
       sendTest: function (mailing, recipient) {
-        var params = angular.extend({}, mailing, mailing.recipients, {
-          // options:  {force_rollback: 1}, // Test mailings include tracking features, so the mailing must be persistent
-          'api.Mailing.send_test': {
-            mailing_id: '$value.id',
-            test_email: recipient.email,
-            test_group: recipient.gid
-          }
-        });
+        return queueWrite(mailing, () => {
+          var params = angular.extend({}, mailing, mailing.recipients, {
+            // options:  {force_rollback: 1}, // Test mailings include tracking features, so the mailing must be persistent
+            'api.Mailing.send_test': {
+              mailing_id: '$value.id',
+              test_email: recipient.email,
+              test_group: recipient.gid
+            }
+          });
 
-        // WORKAROUND: Mailing.create (aka CRM_Mailing_BAO_Mailing::create()) interprets scheduled_date
-        // as an *intent* to schedule and creates tertiary records. Saving a draft with a scheduled_date
-        // is therefore not allowed. Remove this after fixing Mailing.create's contract.
-        delete params.scheduled_date;
+          // WORKAROUND: Mailing.create (aka CRM_Mailing_BAO_Mailing::create()) interprets scheduled_date
+          // as an *intent* to schedule and creates tertiary records. Saving a draft with a scheduled_date
+          // is therefore not allowed. Remove this after fixing Mailing.create's contract.
+          delete params.scheduled_date;
 
-        delete params.jobs;
+          delete params.jobs;
 
-        delete params.recipients; // the content was merged in
+          delete params.recipients; // the content was merged in
 
-        params._skip_evil_bao_auto_recipients_ = 1; // skip recipient rebuild while sending test mail
+          params._skip_evil_bao_auto_recipients_ = 1; // skip recipient rebuild while sending test mail
 
-        return crmQueue(crmApi)('Mailing', 'create', params).then(function (result) {
-          if (result.id && !mailing.id) {
-            mailing.id = result.id;
-          }  // no rollback, so update mailing.id
-          mailing.modified_date = result.values[result.id].modified_date;
-          return result.values[result.id]['api.Mailing.send_test'].values;
+          return crmApi('Mailing', 'create', params).then(function (result) {
+            if (result.id && !mailing.id) {
+              mailing.id = result.id;
+            }  // no rollback, so update mailing.id
+            mailing.modified_date = result.values[result.id].modified_date;
+            return result.values[result.id]['api.Mailing.send_test'].values;
+          });
         });
       }
     };
